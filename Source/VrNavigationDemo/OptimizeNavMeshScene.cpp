@@ -65,12 +65,17 @@ void OptimizeNavMeshScene::OptimizeAllMesh()
 
 					if (StaticComps.Num() > 0)
 					{
+						
 						TArray<UStaticMeshComponent*> NewStaticComps;
 
 						for (UStaticMeshComponent* elem : StaticComps)
 						{
+							UE_LOG(LogTemp, Error, TEXT("Devo vedere la static mesh %i"), elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle());
+
 							if (!elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle())
 							{
+								
+								UE_LOG(LogTemp, Error, TEXT("Already isDynamicObstacle: %s"), *ActorItr->GetName());
 								NewStaticComps.Add(elem);
 							}
 						}
@@ -127,7 +132,7 @@ void OptimizeNavMeshScene::UpdateMeshBounds(UBoxComponent* const &CollisionMesh,
 
 		Mesh->SetCanEverAffectNavigation(false);
 
-		if (CollisionMesh->Bounds != Mesh->Bounds)
+		if (CollisionMesh->Bounds.BoxExtent != Mesh->Bounds.BoxExtent)
 		{		
 			CollisionMesh->SetBoxExtent(Mesh->Bounds.BoxExtent);
 			navigationSystemV1->UpdateComponentInNavOctree(*CollisionMesh);
