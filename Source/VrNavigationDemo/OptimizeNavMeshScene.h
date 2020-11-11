@@ -25,6 +25,14 @@ public:
 	UFUNCTION()
 	void OptimizeAllMesh();
 
+	template <class T>
+	UFUNCTION()
+	void UpdateSpecificMeshWithBox(TActorIterator<AActor> const&, T* const&);
+
+	template <class T>
+	UFUNCTION()
+	void UpdateMeshBounds(class UBoxComponent* const&, T* const&);
+
 private:
 
 	UFUNCTION()
@@ -32,10 +40,6 @@ private:
 			
 	template <class T>
 	UFUNCTION()
-	void UpdateMeshWithBox(const TActorIterator<class AActor>& , const TArray<T*>& );
-
-	template <class T>
-	UFUNCTION()
-	void UpdateMeshBounds(class UBoxComponent* const &CollisionMesh, T* const& Mesh);
+	void UpdateMeshWithBox(TActorIterator<AActor> const& , const TArray<T*>& );
 
 };

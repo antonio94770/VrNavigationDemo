@@ -18,9 +18,11 @@ OptimizeNavMeshScene::OptimizeNavMeshScene(UWorld* NewWorld)
 	navigationSystemV1 = UNavigationSystemV1::GetNavigationSystem(World);
 }
 
+
 OptimizeNavMeshScene::~OptimizeNavMeshScene()
 {
 }
+
 
 void OptimizeNavMeshScene::OptimizeAllMesh()
 {
@@ -41,6 +43,7 @@ void OptimizeNavMeshScene::OptimizeAllMesh()
 
 				if (BoxComps.Num() > 0)
 				{
+					//UE_LOG(LogTemp, Error, TEXT("ENTRO QUI."));
 					for (UBoxComponent* BoxElem : BoxComps)
 					{
 						for (UStaticMeshComponent* StaticElem : StaticComps)
@@ -57,7 +60,7 @@ void OptimizeNavMeshScene::OptimizeAllMesh()
 				}
 				else
 				{
-					UE_LOG(LogTemp, Error, TEXT("No box for: %s"), *ActorItr->GetName());
+					//UE_LOG(LogTemp, Error, TEXT("No box for: %s"), *ActorItr->GetName());
 				
 
 					if (ProceduralComps.Num() > 0)
@@ -70,9 +73,9 @@ void OptimizeNavMeshScene::OptimizeAllMesh()
 
 						for (UStaticMeshComponent* elem : StaticComps)
 						{
-							UE_LOG(LogTemp, Error, TEXT("Devo vedere la static mesh %i"), elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle());
+							//UE_LOG(LogTemp, Error, TEXT("Devo vedere la static mesh %i"), elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle());
 
-							if (!elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle())
+							if (elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle() == false)
 							{
 								
 								UE_LOG(LogTemp, Error, TEXT("Already isDynamicObstacle: %s"), *ActorItr->GetName());
@@ -80,7 +83,8 @@ void OptimizeNavMeshScene::OptimizeAllMesh()
 							}
 						}
 
-						UpdateMeshWithBox(ActorItr, NewStaticComps);
+						if(NewStaticComps.Num() > 0)
+							UpdateMeshWithBox(ActorItr, NewStaticComps);
 					}
 				}
 
@@ -88,6 +92,7 @@ void OptimizeNavMeshScene::OptimizeAllMesh()
 		}
 	}
 }
+
 
 void OptimizeNavMeshScene::UpdateStaticMesh()
 {
@@ -101,8 +106,9 @@ void OptimizeNavMeshScene::UpdateStaticMesh()
 	}
 }
 
+
 template <class T>
-void OptimizeNavMeshScene::UpdateMeshWithBox(const TActorIterator<AActor>& ActorItr, const TArray<T*>& Comps)
+void OptimizeNavMeshScene::UpdateMeshWithBox(TActorIterator<AActor> const& ActorItr, TArray<T*> const& Comps)
 {
 	UBoxComponent* CollisionMesh = NewObject<UBoxComponent>(*ActorItr, UBoxComponent::StaticClass(), TEXT("BoxCollider"));
 	if (CollisionMesh)
@@ -121,12 +127,30 @@ void OptimizeNavMeshScene::UpdateMeshWithBox(const TActorIterator<AActor>& Actor
 	}
 }
 
+
+template <class T>
+void OptimizeNavMeshScene::UpdateSpecificMeshWithBox(TActorIterator<AActor> const& ActorItr, T* const& Mesh)
+{
+	UBoxComponent* CollisionMesh = NewObject<UBoxComponent>(*ActorItr, UBoxComponent::StaticClass(), TEXT("BoxCollider"));
+	if (CollisionMesh)
+	{
+		ActorItr->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+		CollisionMesh->SetMobility(EComponentMobility::Movable);
+		CollisionMesh->SetWorldLocation(ActorItr->GetActorLocation());
+		ActorItr->SetRootComponent(CollisionMesh);
+
+		UpdateMeshBounds(CollisionMesh, Mesh);
+
+		CollisionMesh->RegisterComponent();
+	}
+}
+
+
 template <class T>
 void OptimizeNavMeshScene::UpdateMeshBounds(UBoxComponent* const &CollisionMesh, T* const &Mesh)
 {
 	if (navigationSystemV1 != nullptr)
-	{
-		
+	{	
 		CollisionMesh->AreaClass = UNavArea_Null::StaticClass();
 		CollisionMesh->bDynamicObstacle = true;
 
@@ -139,5 +163,4 @@ void OptimizeNavMeshScene::UpdateMeshBounds(UBoxComponent* const &CollisionMesh,
 			UE_LOG(LogTemp, Error, TEXT("Update box component for: %s"), *Mesh->GetName());
 		}
 	}
-
 }
