@@ -71,7 +71,7 @@ FVector NavMeshSceneBounds::GetNavMeshBounds()
 
 		FVector Add = Origin + BoxExtent;
 
-		//UE_LOG(LogTemp, Error, TEXT("Actor %s: %f"), *Actor->GetName(), Add.Y);
+		UE_LOG(LogTemp, Error, TEXT("Actor %s: %s"), *Actor->GetName(), *Add.ToString());
 
 		if (Origin.X < 0)
 		{
@@ -140,6 +140,7 @@ FVector NavMeshSceneBounds::GetNavMeshBounds()
 	//NavMeshBounds = FVector(fabs(MinX), fabs(MinY), fabs(MinZ) );
 
 
+	UE_LOG(LogTemp, Error, TEXT("MaxX: %f MaxY: %f MaxZ: %f"), MaxX, MaxY, MaxZ);
 	UE_LOG(LogTemp, Error, TEXT("Bounds: %s"), *NavMeshBounds.ToString());
 
 
