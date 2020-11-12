@@ -321,7 +321,7 @@ void AVRCharacter::SpawnDefaultProceduralMesh()
 void AVRCharacter::SpawnNavMesh()
 {
 	NavMeshController NavController = NavMeshController(GetWorld());
-	NavController.RefreshNavMesh();	
+	NavController.RefreshNavMeshBounds();	
 }
 
 void AVRCharacter::CallOptimizeNavMesh()

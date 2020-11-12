@@ -8,6 +8,7 @@
 #include "EngineUtils.h"
 #include "NavigationSystem.h"
 #include <VrNavigationDemo\OptimizeNavMeshScene.h>
+#include <VrNavigationDemo\NavMeshSceneBounds.h>
 
 
 NavMeshController::NavMeshController()
@@ -28,8 +29,8 @@ NavMeshController::NavMeshController(UWorld* NewWorld)
 		this->navigationSystemV1 = UNavigationSystemV1::GetNavigationSystem(World);
 
 		//SpawnNavMesh();
-		OptimizeScene();
-		SetupNavMeshSettings();
+		//OptimizeScene();
+		//SetupNavMeshSettings();
 	}
 	else
 		UE_LOG(LogTemp, Error, TEXT("No World Reference."));
@@ -64,22 +65,35 @@ void NavMeshController::SetupNavMeshSettings()
 }
 
 
-void NavMeshController::RefreshNavMesh()
+void NavMeshController::RefreshNavMeshBounds()
 {
 	if (World != nullptr && navigationSystemV1 != nullptr)
 	{
+		NavMeshSceneBounds SceneBounds = NavMeshSceneBounds(World);
+		FVector NavBox = SceneBounds.GetNavMeshBounds();
 
 		for (TActorIterator<ANavMeshBoundsVolume> ActorItr(World); ActorItr; ++ActorItr) {
 			arrayOfNavMeshBoundsVolume.Add(*ActorItr);
 		}
 
-		arrayOfNavMeshBoundsVolume[0]->SetActorRelativeScale3D(FVector(6000.f, 6000.f, 6000.f));
-		arrayOfNavMeshBoundsVolume[0]->GetRootComponent()->UpdateBounds();
+		for (ANavMeshBoundsVolume* Volume : arrayOfNavMeshBoundsVolume)
+		{
+			Volume->GetRootComponent()->SetMobility(EComponentMobility::Stationary);
 
-		navigationSystemV1->OnNavigationBoundsUpdated(arrayOfNavMeshBoundsVolume[0]);
+			Volume->SetActorRelativeScale3D(NavBox);
+			Volume->GetRootComponent()->UpdateBounds();
 
 
-		UE_LOG(LogTemp, Error, TEXT("Number of NavMeshVolume: %i"), arrayOfNavMeshBoundsVolume.Num());
+			Volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
+
+			//Volume->GetBrushBuilder()
+
+
+			navigationSystemV1->OnNavigationBoundsUpdated(Volume);
+
+
+			//UE_LOG(LogTemp, Error, TEXT("Number of NavMeshVolume: %i"), arrayOfNavMeshBoundsVolume.Num());
+		}
 	}
 }
 
@@ -87,14 +101,22 @@ void NavMeshController::RefreshNavMesh()
 void NavMeshController::SpawnNavMesh()
 {
 	//Non funziona lo spawn del navmesh a runtime
-	/*if (NavMeshBoundsVolume != nullptr)
+	if (World != nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("SPAWN"));
 
 		FRotator Rotation(0.0f, 0.0f, 0.0f);
 		FActorSpawnParameters SpawnInfo;
 
-		GetWorld()->SpawnActor<ANavMeshBoundsVolume>(NavMeshBoundsVolume, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
-		GetWorld()->SpawnActor<ARecastNavMesh>(RecastNavmesh, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
-	}*/
+		//ANavMeshBoundsVolume* Volume = World->SpawnActor<ANavMeshBoundsVolume>(NavMeshBoundsVolume, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
+
+		ANavMeshBoundsVolume* Volume = NewObject<ANavMeshBoundsVolume>(ANavMeshBoundsVolume::StaticClass(), TEXT("NavMeshVolume"));
+
+		Volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+		Volume->GetRootComponent()->SetWorldLocation(FVector(0.f, 0.f, 0.f));
+
+		Volume->GetRootComponent()->RegisterComponent();
+		navigationSystemV1->OnNavigationBoundsUpdated(Volume);
+		//World->SpawnActor<ARecastNavMesh>(RecastNavmesh, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
+	}
 }

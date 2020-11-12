@@ -6,6 +6,7 @@
 #include "Engine/StaticMesh.h"
 #include "Components/StaticMeshComponent.h"
 #include "AI/Navigation/NavCollisionBase.h"
+#include "NavCollision.h"
 #include "ProceduralMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "NavAreas/NavArea_Null.h"
@@ -73,12 +74,14 @@ void OptimizeNavMeshScene::OptimizeAllMesh()
 
 						for (UStaticMeshComponent* elem : StaticComps)
 						{
+							auto navCollision = Cast<UNavCollision>(elem->GetStaticMesh()->GetNavCollision());
+							navCollision->AreaClass;
+
+						
 							//UE_LOG(LogTemp, Error, TEXT("Devo vedere la static mesh %i"), elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle());
 
-							if (elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle() == false)
+							if (elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle() == false || navCollision->AreaClass != UNavArea_Null::StaticClass())
 							{
-								
-								UE_LOG(LogTemp, Error, TEXT("Already isDynamicObstacle: %s"), *ActorItr->GetName());
 								NewStaticComps.Add(elem);
 							}
 						}
@@ -157,7 +160,7 @@ void OptimizeNavMeshScene::UpdateMeshBounds(UBoxComponent* const &CollisionMesh,
 		Mesh->SetCanEverAffectNavigation(false);
 
 		if (CollisionMesh->Bounds.BoxExtent != Mesh->Bounds.BoxExtent)
-		{		
+		{	
 			CollisionMesh->SetBoxExtent(Mesh->Bounds.BoxExtent);
 			navigationSystemV1->UpdateComponentInNavOctree(*CollisionMesh);
 			UE_LOG(LogTemp, Error, TEXT("Update box component for: %s"), *Mesh->GetName());

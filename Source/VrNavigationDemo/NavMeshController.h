@@ -18,7 +18,7 @@ public:
 
 public:
 
-	void RefreshNavMesh();
+	void RefreshNavMeshBounds();
 
 private:
 	UPROPERTY()
