@@ -45,7 +45,8 @@ TArray<AActor* > NavMeshSceneBounds::GetAllSceneActor()
 
 void NavMeshSceneBounds::GetSceneBounds(FVector BoundsDifference)
 {
-	ActorsArray = GetAllSceneActor();
+	if(ActorsArray.Num() == 0)
+		ActorsArray = GetAllSceneActor();
 
 	float X;
 	float Y;
@@ -124,39 +125,6 @@ void NavMeshSceneBounds::GetSceneBounds(FVector BoundsDifference)
 		}
 
 	}
-
-	/*float FinalX;
-	float FinalY;
-	float FinalZ;
-
-	UE_LOG(LogTemp, Error, TEXT("MaxX: %f MaxY: %f MaxZ: %f"), MaxX, MaxY, MaxZ);
-	UE_LOG(LogTemp, Error, TEXT("MinX: %f MinY: %f MinZ: %f"), MinX, MinY, MinZ);
-
-	if (fabs(MinX) < MaxX)
-		FinalX = MaxX * 2;
-	else
-		FinalX = fabs(MinX) * 2;
-
-	if (fabs(MinY) < MaxY)
-		FinalY = MaxY * 2;
-	else
-		FinalY = fabs(MinY) * 2;
-
-	if (fabs(MinZ) < MaxZ)
-		FinalZ = MaxZ * 2;
-	else
-		FinalZ = fabs(MinZ) * 2;
-
-
-	NavMeshBounds = FVector(FinalX, FinalY, FinalZ);*/
-	//NavMeshBounds = FVector(fabs(MinX), fabs(MinY), fabs(MinZ) );
-
-
-	/*UE_LOG(LogTemp, Error, TEXT("MaxX: %f MaxY: %f MaxZ: %f"), FinalX, FinalY, FinalZ);
-	UE_LOG(LogTemp, Error, TEXT("Bounds: %s"), *NavMeshBounds.ToString());
-
-
-	return NavMeshBounds;*/
 }
 
 FVector NavMeshSceneBounds::GetOptimalNavMeshPosition()

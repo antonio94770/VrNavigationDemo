@@ -16,7 +16,7 @@ private:
 	UWorld* World;
 
 	UPROPERTY()
-	class UNavigationSystemV1* navigationSystemV1;
+	class UNavigationSystemV1* NavigationSystemV1;
 
 public:
 	OptimizeNavMeshScene(UWorld* );
@@ -32,12 +32,7 @@ public:
 	template <class T>
 	UFUNCTION()
 	void UpdateMeshBounds(class UBoxComponent* const&, T* const&);
-
-private:
-
-	UFUNCTION()
-	void UpdateStaticMesh();
-			
+		
 	template <class T>
 	UFUNCTION()
 	void UpdateMeshWithBox(TActorIterator<AActor> const& , const TArray<T*>& );

@@ -27,7 +27,7 @@ public:
 	FVector GetOptimalNavMeshPosition();
 
 	UFUNCTION()
-		FVector	GetNavMeshBounds(FVector NavMeshPosition); 
+	FVector	GetNavMeshBounds(FVector NavMeshPosition); 
 		
 	UFUNCTION()
 	void ResetBounds();
