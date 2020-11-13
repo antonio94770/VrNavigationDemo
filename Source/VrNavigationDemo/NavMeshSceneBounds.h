@@ -19,9 +19,18 @@ private:
 	UFUNCTION()
 	TArray<AActor* > GetAllSceneActor();
 
-public:
 	UFUNCTION()
-	FVector GetNavMeshBounds();
+	void GetSceneBounds(FVector Difference);
+
+public:	
+	UFUNCTION()
+	FVector GetOptimalNavMeshPosition();
+
+	UFUNCTION()
+		FVector	GetNavMeshBounds(FVector NavMeshPosition); 
+		
+	UFUNCTION()
+	void ResetBounds();
 
 private:
 
@@ -33,4 +42,10 @@ private:
 
 	UPROPERTY()
 	TArray<AActor*> ActorsArray;
+
+	UPROPERTY()
+	float MaxX,MaxY,MaxZ;
+
+	UPROPERTY()
+	float MinY,MinX,MinZ;
 };

@@ -70,7 +70,6 @@ void NavMeshController::RefreshNavMeshBounds()
 	if (World != nullptr && navigationSystemV1 != nullptr)
 	{
 		NavMeshSceneBounds SceneBounds = NavMeshSceneBounds(World);
-		FVector NavBox = SceneBounds.GetNavMeshBounds();
 
 		for (TActorIterator<ANavMeshBoundsVolume> ActorItr(World); ActorItr; ++ActorItr) {
 			arrayOfNavMeshBoundsVolume.Add(*ActorItr);
@@ -78,9 +77,12 @@ void NavMeshController::RefreshNavMeshBounds()
 
 		for (ANavMeshBoundsVolume* Volume : arrayOfNavMeshBoundsVolume)
 		{
-			Volume->GetRootComponent()->SetMobility(EComponentMobility::Stationary);
+			Volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
 
-			Volume->SetActorRelativeScale3D(NavBox);
+			
+			FVector NewMeshPosition = SceneBounds.GetOptimalNavMeshPosition();
+			Volume->SetActorLocation(NewMeshPosition);
+			Volume->SetActorRelativeScale3D(SceneBounds.GetNavMeshBounds(NewMeshPosition));
 			Volume->GetRootComponent()->UpdateBounds();
 
 
