@@ -79,16 +79,24 @@ void NavMeshController::RefreshNavMeshBounds()
 		{
 			Volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
 
+			FVector Origin;
+			FVector BoxExtent;
+			Volume->GetActorBounds(false, Origin, BoxExtent);
+
 			
-			FVector NewMeshPosition = SceneBounds.GetOptimalNavMeshPosition();
+			FVector NewMeshPosition = SceneBounds.GetOptimalNavMeshPosition(1);
 			Volume->SetActorLocation(NewMeshPosition);
-			Volume->SetActorRelativeScale3D(SceneBounds.GetNavMeshBounds(NewMeshPosition));
+
+			BoxExtent = BoxExtent * 2;
+			FVector NewNavMeshScale = SceneBounds.GetNavMeshBounds(NewMeshPosition, 1);
+
+			NewNavMeshScale = FVector(NewNavMeshScale.X / BoxExtent.X, NewNavMeshScale.Y / BoxExtent.Y, NewNavMeshScale.Z / BoxExtent.Z);
+
+			Volume->SetActorRelativeScale3D(NewNavMeshScale);
 			Volume->GetRootComponent()->UpdateBounds();
 
 
 			Volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
-
-			//Volume->GetBrushBuilder()
 
 
 			navigationSystemV1->OnNavigationBoundsUpdated(Volume);

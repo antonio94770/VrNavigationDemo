@@ -17,17 +17,20 @@ public:
 
 private:
 	UFUNCTION()
-	TArray<AActor* > GetAllSceneActor();
+	TArray<float > GetAllFloorActorsPosition();
 
 	UFUNCTION()
-	void GetSceneBounds(FVector Difference);
+	TArray<AActor* > GetAllSceneActors();
+
+	UFUNCTION()
+	void GetFloorBounds(FVector Difference, float MinFloorHeight, float MaxFloorHeight);
 
 public:	
 	UFUNCTION()
-	FVector GetOptimalNavMeshPosition();
+	FVector GetOptimalNavMeshPosition(int Floor);
 
 	UFUNCTION()
-	FVector	GetNavMeshBounds(FVector NavMeshPosition); 
+	FVector	GetNavMeshBounds(FVector NavMeshPosition, int Floor);
 		
 	UFUNCTION()
 	void ResetBounds();
@@ -44,8 +47,14 @@ private:
 	TArray<AActor*> ActorsArray;
 
 	UPROPERTY()
+	TArray<float > FloorsArrayOrigin;
+
+	UPROPERTY()
 	float MaxX,MaxY,MaxZ;
 
 	UPROPERTY()
 	float MinY,MinX,MinZ;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool bMoveAndRestrictToFloor = false;
 };
