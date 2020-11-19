@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "NavMeshController.h"
 #include "VRCharacter.generated.h"
 
 UCLASS()
@@ -97,6 +98,11 @@ private:
 	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AProceduralMeshDefault> BP_ProceduralMeshDefault;
+
+	UPROPERTY()
+	int CurrentFloorForTesting;
+
+	NavMeshController NavController;
 
 private:
 	void ForwardMovement(float moveSpeed);

@@ -28,6 +28,10 @@ NavMeshController::NavMeshController(UWorld* NewWorld)
 	{
 		this->navigationSystemV1 = UNavigationSystemV1::GetNavigationSystem(World);
 
+		for (TActorIterator<ANavMeshBoundsVolume> ActorItr(World); ActorItr; ++ActorItr) {
+			arrayOfNavMeshBoundsVolume.AddUnique(*ActorItr);
+		}
+		SceneBounds = NavMeshSceneBounds(World);
 		//SpawnNavMesh();
 		//OptimizeScene();
 		//SetupNavMeshSettings();
@@ -69,14 +73,13 @@ void NavMeshController::RefreshNavMeshBounds()
 {
 	if (World != nullptr && navigationSystemV1 != nullptr)
 	{
-		NavMeshSceneBounds SceneBounds = NavMeshSceneBounds(World);
-
-		for (TActorIterator<ANavMeshBoundsVolume> ActorItr(World); ActorItr; ++ActorItr) {
-			arrayOfNavMeshBoundsVolume.Add(*ActorItr);
-		}
+		FVector NewMeshPosition;
+		FVector NewNavMeshScale;
 
 		for (ANavMeshBoundsVolume* Volume : arrayOfNavMeshBoundsVolume)
 		{
+			//UE_LOG(LogTemp, Error, TEXT("CHIAMO L'AGGIORNAMENTO"));
+
 			Volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
 
 			FVector Origin;
@@ -84,14 +87,14 @@ void NavMeshController::RefreshNavMeshBounds()
 			Volume->GetActorBounds(false, Origin, BoxExtent);
 
 			
-			FVector NewMeshPosition = SceneBounds.GetOptimalNavMeshPosition(1);
+			NewMeshPosition = SceneBounds.GetOptimalNavMeshPosition(CurrentFloor);
 			Volume->SetActorLocation(NewMeshPosition);
 
 			BoxExtent = BoxExtent * 2;
-			FVector NewNavMeshScale = SceneBounds.GetNavMeshBounds(NewMeshPosition, 1);
+			NewNavMeshScale = SceneBounds.GetNavMeshBounds(Volume->GetActorLocation(), CurrentFloor);
 
 			NewNavMeshScale = FVector(NewNavMeshScale.X / BoxExtent.X, NewNavMeshScale.Y / BoxExtent.Y, NewNavMeshScale.Z / BoxExtent.Z);
-
+			
 			Volume->SetActorRelativeScale3D(NewNavMeshScale);
 			Volume->GetRootComponent()->UpdateBounds();
 
@@ -129,4 +132,9 @@ void NavMeshController::SpawnNavMesh()
 		navigationSystemV1->OnNavigationBoundsUpdated(Volume);
 		//World->SpawnActor<ARecastNavMesh>(RecastNavmesh, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
 	}
+}
+
+void NavMeshController::ChangeCurrentFloor(int NewFloor)
+{
+	this->CurrentFloor = NewFloor;
 }

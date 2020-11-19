@@ -46,6 +46,8 @@ AVRCharacter::AVRCharacter()
 	DestinationMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DestinationMarker"));
 	DestinationMarker->SetupAttachment(GetRootComponent());
 
+	CurrentFloorForTesting = 0;
+
 }
 
 // Called when the game starts or when spawned
@@ -56,6 +58,9 @@ void AVRCharacter::BeginPlay()
 	DestinationMarker->SetVisibility(false);
 	bCanTeleport = false;
 	bAlreadyTeleported = false;
+
+	NavController = NavMeshController(GetWorld());
+	
 	
 }
 
@@ -320,8 +325,12 @@ void AVRCharacter::SpawnDefaultProceduralMesh()
 
 void AVRCharacter::SpawnNavMesh()
 {
-	NavMeshController NavController = NavMeshController(GetWorld());
+	NavController.ChangeCurrentFloor(CurrentFloorForTesting);
 	NavController.RefreshNavMeshBounds();	
+
+	UE_LOG(LogTemp, Error, TEXT("CHIAMO L'AGGIORNAMENTO"));
+
+	CurrentFloorForTesting++;
 }
 
 void AVRCharacter::CallOptimizeNavMesh()

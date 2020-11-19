@@ -57,4 +57,5 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bMoveAndRestrictToFloor = false;
+
 };

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NavMeshSceneBounds.h"
 
 /**
  * 
@@ -19,6 +20,7 @@ public:
 public:
 
 	void RefreshNavMeshBounds();
+	void ChangeCurrentFloor(int NewFloor);
 
 private:
 	UPROPERTY()
@@ -36,6 +38,12 @@ private:
 
 	UPROPERTY()
 	TArray<class ANavMeshBoundsVolume*> arrayOfNavMeshBoundsVolume;
+
+	UPROPERTY()
+	int CurrentFloor;
+
+	UPROPERTY()
+	NavMeshSceneBounds SceneBounds;
 
 private:
 	void OptimizeScene();
