@@ -8,12 +8,23 @@
 /**
  * 
  */
+
+UENUM()
+enum class ENavMeshTypeController : uint8 {
+	SINGLEMODE,
+	ONEFLOOR,
+	MULTIPLEFLOOR,
+};
+
+
 class VRNAVIGATIONDEMO_API NavMeshController
 {
 public:
 	NavMeshController();
 
-	NavMeshController(UWorld*);
+	NavMeshController(UWorld*, bool bDifferentNavMeshForDifferentFloor);
+	
+	NavMeshController(UWorld*, ENavMeshTypeController bDifferentNavMeshForDifferentFloor);
 
 	~NavMeshController();
 
@@ -21,6 +32,13 @@ public:
 
 	void RefreshNavMeshBounds();
 	void ChangeCurrentFloor(int NewFloor);
+
+public:
+	UPROPERTY()
+	int FloorsNumber;
+
+	UPROPERTY()
+	ENavMeshTypeController NavMeshMode;
 
 private:
 	UPROPERTY()
@@ -43,7 +61,12 @@ private:
 	int CurrentFloor;
 
 	UPROPERTY()
+	FVector InitialNavMeshBound;
+
+	UPROPERTY()
 	NavMeshSceneBounds SceneBounds;
+
+	
 
 private:
 	void OptimizeScene();

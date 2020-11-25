@@ -13,9 +13,10 @@
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "ProceduralMeshDefault.h"
-#include "NavMeshManager.h"
 #include <VrNavigationDemo\NavMeshController.h>
 #include "OptimizeNavMeshScene.h"
+#include "PerformanceProfiler.h"
+#include "EngineUtils.h"
 
 
 // Sets default values
@@ -59,9 +60,7 @@ void AVRCharacter::BeginPlay()
 	bCanTeleport = false;
 	bAlreadyTeleported = false;
 
-	NavController = NavMeshController(GetWorld());
-	
-	
+	NavController = NavMeshController(GetWorld(), NavMeshType);
 }
 
 // Called every frame
@@ -92,6 +91,7 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction(TEXT("SpawnDefaultProceduralMesh"), IE_Released, this, &AVRCharacter::SpawnDefaultProceduralMesh);
 	PlayerInputComponent->BindAction(TEXT("SpawnNavMesh"), IE_Released, this, &AVRCharacter::SpawnNavMesh);
 	PlayerInputComponent->BindAction(TEXT("OptimizeNavMesh"), IE_Released, this, &AVRCharacter::CallOptimizeNavMesh);
+	PlayerInputComponent->BindAction(TEXT("SaveToFile"), IE_Released, this, &AVRCharacter::SaveToFileForStudyingPerformance);
 	//TO DO: implementare spawn procedural mesh normali
 }
 
@@ -326,17 +326,43 @@ void AVRCharacter::SpawnDefaultProceduralMesh()
 void AVRCharacter::SpawnNavMesh()
 {
 	NavController.ChangeCurrentFloor(CurrentFloorForTesting);
-	NavController.RefreshNavMeshBounds();	
+	NavController.RefreshNavMeshBounds();
 
-	UE_LOG(LogTemp, Error, TEXT("CHIAMO L'AGGIORNAMENTO"));
+	/*for (TActorIterator<APerformanceProfiler> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+		ActorItr->GetNavigationBuildTime();
+	}*/
 
-	CurrentFloorForTesting++;
+
+	if (NavMeshType == ENavMeshTypeController::ONEFLOOR)
+	{
+		if (CurrentFloorForTesting < NavController.FloorsNumber - 1)
+			CurrentFloorForTesting++;
+		else
+			CurrentFloorForTesting = 0;
+	}
+		
 }
 
 void AVRCharacter::CallOptimizeNavMesh()
 {
 	OptimizeNavMeshScene Optimizer = OptimizeNavMeshScene(GetWorld());
 	Optimizer.OptimizeAllMesh();
+}
+
+
+void AVRCharacter::SaveToFileForStudyingPerformance()
+{
+	for (TActorIterator<APerformanceProfiler> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+
+		if (NavMeshType == ENavMeshTypeController::SINGLEMODE)
+			ActorItr->SaveArrayToFile("SingleMode.csv", true);	
+
+		if (NavMeshType == ENavMeshTypeController::ONEFLOOR)
+			ActorItr->SaveArrayToFile("OneFloor.csv", true);
+
+		if (NavMeshType == ENavMeshTypeController::MULTIPLEFLOOR)
+			ActorItr->SaveArrayToFile("MultipleFloor.csv", true);
+	}
 }
 
 void AVRCharacter::ForwardMovement(float moveSpeed)

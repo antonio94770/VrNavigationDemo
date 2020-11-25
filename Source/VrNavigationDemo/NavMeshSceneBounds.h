@@ -8,11 +8,24 @@
 /**
  * 
  */
+
+UENUM()
+enum class ENavMeshTypeForSceneBounds : uint8 {
+	SINGLEMODE,
+	ONEFLOOR,
+	MULTIPLEFLOOR,
+};
+
+class NavMeshController;
+
 class VRNAVIGATIONDEMO_API NavMeshSceneBounds
 {
+
+
 public:
 	NavMeshSceneBounds();
 	NavMeshSceneBounds(UWorld* World);
+	NavMeshSceneBounds(UWorld* NewWorld, class NavMeshController& );
 	~NavMeshSceneBounds();
 
 private:
@@ -31,6 +44,9 @@ public:
 
 	UFUNCTION()
 	FVector	GetNavMeshBounds(FVector NavMeshPosition, int Floor);
+	
+	UFUNCTION()
+	int GetNumberOfFloors();
 		
 	UFUNCTION()
 	void ResetBounds();
@@ -55,7 +71,6 @@ private:
 	UPROPERTY()
 	float MinY,MinX,MinZ;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	bool bMoveAndRestrictToFloor = false;
-
+	UPROPERTY()
+	bool bSingleMode = false;
 };

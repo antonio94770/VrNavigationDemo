@@ -2,7 +2,7 @@
 
 
 #include "NavMeshSceneBounds.h"
-
+#include "NavMeshController.h"
 #include "EngineUtils.h"
 
 NavMeshSceneBounds::NavMeshSceneBounds()
@@ -13,11 +13,33 @@ NavMeshSceneBounds::NavMeshSceneBounds(UWorld* NewWorld)
 {
 	this->World = NewWorld;
 
+	if (FloorsArrayOrigin.Num() == 0)
+		FloorsArrayOrigin = GetAllFloorActorsPosition();
+
+	ResetBounds();
+}
+
+NavMeshSceneBounds::NavMeshSceneBounds(UWorld* NewWorld, NavMeshController& object)
+{
+	this->World = NewWorld;
+
+	if (FloorsArrayOrigin.Num() == 0)
+		FloorsArrayOrigin = GetAllFloorActorsPosition();
+	
+
+	if (object.NavMeshMode == ENavMeshTypeController::SINGLEMODE)
+	{
+		bSingleMode = true;
+	}
+
+
+
 	ResetBounds();
 }
 
 NavMeshSceneBounds::~NavMeshSceneBounds()
 {
+
 }
 
 
@@ -59,7 +81,7 @@ TArray<AActor* > NavMeshSceneBounds::GetAllSceneActors()
 			{
 				ActorsList.Add(*ActorItr);
 			}
-		}
+		}	
 	}
 
 	return ActorsList;
@@ -95,9 +117,15 @@ void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinFloor
 		Origin.Y = Origin.Y - BoundsDifference.Y;
 		Origin.Z = Origin.Z - BoundsDifference.Z;
 
-		if ((Origin.Z < MaxFloorHeight - BoundsDifference.Z && Origin.Z > MinFloorHeight - BoundsDifference.Z) || (MaxFloorHeight < MinFloorHeight && Origin.Z > MinFloorHeight - BoundsDifference.Z))
+		//UE_LOG(LogTemp, Error, TEXT("MESH TYPE: %f"), NavMeshControllerInstance->NavMeshType)
+
+
+		if (bSingleMode ||
+			((Origin.Z < MaxFloorHeight - BoundsDifference.Z && Origin.Z > MinFloorHeight - BoundsDifference.Z) || 
+			(MaxFloorHeight < MinFloorHeight && Origin.Z > MinFloorHeight - BoundsDifference.Z)
+			))
 		{
-			UE_LOG(LogTemp, Error, TEXT("Prendo questo actor: %s"), *Actor->GetName());
+			//UE_LOG(LogTemp, Error, TEXT("Prendo questo actor: %s"), *Actor->GetName());
 
 
 			ActorXMin = Origin.X - BoxExtent.X;
@@ -176,17 +204,17 @@ FVector NavMeshSceneBounds::GetOptimalNavMeshPosition(int Floor)
 		{
 			GetFloorBounds(FVector(0.f, 0.f, 0.f), FloorsArrayOrigin[Floor], FloorsArrayOrigin[Floor + 1]);
 
-			UE_LOG(LogTemp, Error, TEXT("Piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor], FloorsArrayOrigin[Floor + 1]);
+			//UE_LOG(LogTemp, Error, TEXT("Piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor], FloorsArrayOrigin[Floor + 1]);
 
 		}
 		else
 		{
 			GetFloorBounds(FVector(0.f, 0.f, 0.f), FloorsArrayOrigin[Floor], -1.f);
-			UE_LOG(LogTemp, Error, TEXT("Ultimo piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor], -1.f);
+			//UE_LOG(LogTemp, Error, TEXT("Ultimo piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor], -1.f);
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("MaxX: %f MaxY: %f MaxZ: %f"), MaxX, MaxY, MaxZ);
-		UE_LOG(LogTemp, Warning, TEXT("MinX: %f MinY: %f MinZ: %f"), MinX, MinY, MinZ);
+		//UE_LOG(LogTemp, Warning, TEXT("MaxX: %f MaxY: %f MaxZ: %f"), MaxX, MaxY, MaxZ);
+		//UE_LOG(LogTemp, Warning, TEXT("MinX: %f MinY: %f MinZ: %f"), MinX, MinY, MinZ);
 		float NewX = (MaxX + MinX) / 2;
 		float NewY = (MaxY + MinY) / 2;
 		float NewZ = (MaxZ + MinZ) / 2;
@@ -217,11 +245,11 @@ FVector NavMeshSceneBounds::GetNavMeshBounds(FVector NavMeshPosition, int Floor)
 		else
 		{
 			GetFloorBounds(NavMeshPosition, FloorsArrayOrigin[Floor], -1.f);
-			UE_LOG(LogTemp, Error, TEXT("Ultimo piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor]);
+			//UE_LOG(LogTemp, Error, TEXT("Ultimo piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor]);
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("MaxX: %f MaxY: %f MaxZ: %f"), MaxX, MaxY, MaxZ);
-		UE_LOG(LogTemp, Warning, TEXT("MinX: %f MinY: %f MinZ: %f"), MinX, MinY, MinZ);
+		//UE_LOG(LogTemp, Warning, TEXT("MaxX: %f MaxY: %f MaxZ: %f"), MaxX, MaxY, MaxZ);
+		//UE_LOG(LogTemp, Warning, TEXT("MinX: %f MinY: %f MinZ: %f"), MinX, MinY, MinZ);
 
 		if (fabs(MinX) < MaxX)
 			FinalX = MaxX * 2;
@@ -244,6 +272,11 @@ FVector NavMeshSceneBounds::GetNavMeshBounds(FVector NavMeshPosition, int Floor)
 	}
 
 	return NavMeshBounds;
+}
+
+int NavMeshSceneBounds::GetNumberOfFloors()
+{
+	return FloorsArrayOrigin.Num();
 }
 
 void NavMeshSceneBounds::ResetBounds()

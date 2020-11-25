@@ -7,6 +7,14 @@
 #include "NavMeshController.h"
 #include "VRCharacter.generated.h"
 
+
+/*UENUM()
+enum class ENavMeshTypeController : uint8 {
+	SINGLEMODE,
+	ONEFLOOR,
+	MULTIPLEFLOOR,
+};*/
+
 UCLASS()
 class VRNAVIGATIONDEMO_API AVRCharacter : public ACharacter
 {
@@ -36,6 +44,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bCanUseMouseInputForCamera = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	bool bDifferentNavMeshForDifferentFloor;
+
 	UPROPERTY()
 	class USceneComponent* RootVR;
 
@@ -59,6 +70,9 @@ private:
 	UPROPERTY()
 	TArray<class USplineMeshComponent*> TeleportMeshPool;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	ENavMeshTypeController NavMeshType;
+
 private:
 	/*UPROPERTY(EditAnywhere)
 	float MaxTeleportDistance = 100.f;*/
@@ -67,7 +81,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	float TeleportProjectileRadius = 10.f;
 
-	//Curve Lenght
+	//Curve Length
 	UPROPERTY(EditAnywhere)
 	float TeleportProjectileSpeed = 1000.f;
 	
@@ -121,4 +135,5 @@ private:
 	void SpawnDefaultProceduralMesh();
 	void SpawnNavMesh();
 	void CallOptimizeNavMesh();
+	void SaveToFileForStudyingPerformance();
 };
