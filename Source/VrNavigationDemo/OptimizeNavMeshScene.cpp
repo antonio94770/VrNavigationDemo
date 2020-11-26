@@ -104,8 +104,8 @@ void OptimizeNavMeshScene::UpdateMeshWithBox(TActorIterator<AActor> const& Actor
 	{
 		for (T* Elem : Comps)
 		{
-			ActorItr->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-			CollisionMesh->SetMobility(EComponentMobility::Movable);
+			/*ActorItr->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+			CollisionMesh->SetMobility(EComponentMobility::Movable);*/
 			CollisionMesh->SetWorldLocation(ActorItr->GetActorLocation());
 			ActorItr->SetRootComponent(CollisionMesh);
 
@@ -123,8 +123,8 @@ void OptimizeNavMeshScene::UpdateSpecificMeshWithBox(TActorIterator<AActor> cons
 	UBoxComponent* CollisionMesh = NewObject<UBoxComponent>(*ActorItr, UBoxComponent::StaticClass(), TEXT("BoxCollider"));
 	if (CollisionMesh)
 	{
-		ActorItr->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-		CollisionMesh->SetMobility(EComponentMobility::Movable);
+		/*ActorItr->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+		CollisionMesh->SetMobility(EComponentMobility::Movable);*/
 		CollisionMesh->SetWorldLocation(ActorItr->GetActorLocation());
 		ActorItr->SetRootComponent(CollisionMesh);
 
@@ -144,11 +144,12 @@ void OptimizeNavMeshScene::UpdateMeshBounds(UBoxComponent* const &CollisionMesh,
 		CollisionMesh->bDynamicObstacle = true;
 
 		Mesh->SetCanEverAffectNavigation(false);
+		//NavigationSystemV1->RemoveObjectsNavOctreeId(*Mesh);
 
 		if (CollisionMesh->Bounds.BoxExtent != Mesh->Bounds.BoxExtent)
 		{	
 			CollisionMesh->SetBoxExtent(Mesh->Bounds.BoxExtent);
-			NavigationSystemV1->UpdateComponentInNavOctree(*CollisionMesh);
+			NavigationSystemV1->UpdateComponentInNavOctree(*CollisionMesh);			
 			UE_LOG(LogTemp, Error, TEXT("Update box component for: %s"), *Mesh->GetName());
 		}
 	}

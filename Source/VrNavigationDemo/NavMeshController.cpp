@@ -91,6 +91,8 @@ NavMeshController::NavMeshController(UWorld* NewWorld, ENavMeshTypeController Na
 				break;
 		}
 
+		//OptimizeScene();
+
 	}
 	else
 		UE_LOG(LogTemp, Error, TEXT("No World Reference."));
@@ -101,8 +103,8 @@ void NavMeshController::OptimizeScene()
 {
 	if (World != nullptr)
 	{
-		/*OptimizeNavMeshScene Optimizer = OptimizeNavMeshScene(World);
-		Optimizer.OptimizeAllMesh();*/
+		OptimizeNavMeshScene Optimizer = OptimizeNavMeshScene(World);
+		Optimizer.OptimizeAllMesh();
 	}
 }
 

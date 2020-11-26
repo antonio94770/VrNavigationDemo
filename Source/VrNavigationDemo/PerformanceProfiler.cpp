@@ -75,7 +75,7 @@ void APerformanceProfiler::GetNavigationProfilingData(FString Stat, TArray<FStri
 		if (ViewData->NameToStatMap.FindRef(FName(Stat)))
 		{
 			auto stat_data = ViewData->NameToStatMap.FindRef(FName(Stat))->GetValue_int64(DataType);
-			Array->Add(FString::FromInt(stat_data));
+			Array->Add(FString::FromInt(stat_data / 10000));
 		}			
 	}
 	else
@@ -122,17 +122,15 @@ bool APerformanceProfiler::SaveArrayToFile(FString Filename, bool AllowOverWriti
 	
 	FString FinalString = "";
 
-	if (IncAVGArray_RecastBuildCompressedLayers.Num() &&
-		IncMAXArray_RecastBuildCompressedLayers.Num() &&
-		IncAVGArray_RecastBuildLayers.Num() &&
-		IncMAXArray_RecastBuildLayers.Num() &&
-		IncAVGArray_Navigation_BuildTime.Num() &&
-		IncMAXArray_Navigation_BuildTime.Num() &&
-		IncAVGArray_Navigation_GenerateNavigationDataLayer.Num() &&
-		IncMAXArray_Navigation_GenerateNavigationDataLayer.Num() &&
-		/*IncAVGArray_Navigation_RecastMemory.Num() &&
-		IncMAXArray_Navigation_RecastMemory.Num())*/
-		IncAVGArray_RecastBuildRegions.Num() &&
+	if (IncAVGArray_RecastBuildCompressedLayers.Num() == MaxNumberOfTicks &&
+		IncMAXArray_RecastBuildCompressedLayers.Num() == MaxNumberOfTicks &&
+		IncAVGArray_RecastBuildLayers.Num() == MaxNumberOfTicks &&
+		IncMAXArray_RecastBuildLayers.Num() == MaxNumberOfTicks &&
+		IncAVGArray_Navigation_BuildTime.Num() == MaxNumberOfTicks &&
+		IncMAXArray_Navigation_BuildTime.Num() == MaxNumberOfTicks &&
+		IncAVGArray_Navigation_GenerateNavigationDataLayer.Num() == MaxNumberOfTicks &&
+		IncMAXArray_Navigation_GenerateNavigationDataLayer.Num() == MaxNumberOfTicks &&
+		IncAVGArray_RecastBuildRegions.Num() == MaxNumberOfTicks &&
 		IncMAXArray_RecastBuildRegions.Num())
 	{
 		for (int i = 0; i < CurrentTick; i++)
@@ -147,8 +145,6 @@ bool APerformanceProfiler::SaveArrayToFile(FString Filename, bool AllowOverWriti
 				IncMAXArray_Navigation_GenerateNavigationDataLayer[i] + "," +
 				IncAVGArray_RecastBuildRegions[i] + "," +
 				IncMAXArray_RecastBuildRegions[i] +
-				/*IncAVGArray_Navigation_RecastMemory[i] + "," +
-				IncMAXArray_Navigation_RecastMemory[i] +*/
 				LINE_TERMINATOR;
 		}
 	}
@@ -161,8 +157,6 @@ bool APerformanceProfiler::SaveArrayToFile(FString Filename, bool AllowOverWriti
 	UE_LOG(LogTemp, Error, TEXT("SIZE ARRAY: %d"), IncMAXArray_Navigation_BuildTime.Num());
 	UE_LOG(LogTemp, Error, TEXT("SIZE ARRAY: %d"), IncAVGArray_Navigation_GenerateNavigationDataLayer.Num());
 	UE_LOG(LogTemp, Error, TEXT("SIZE ARRAY: %d"), IncMAXArray_Navigation_GenerateNavigationDataLayer.Num());
-	/*UE_LOG(LogTemp, Error, TEXT("SIZE ARRAY: %d"), IncAVGArray_Navigation_RecastMemory.Num());
-	UE_LOG(LogTemp, Error, TEXT("SIZE ARRAY: %d"), IncMAXArray_Navigation_RecastMemory.Num());*/
 	UE_LOG(LogTemp, Error, TEXT("SIZE ARRAY: %d"), IncAVGArray_RecastBuildRegions.Num());
 	UE_LOG(LogTemp, Error, TEXT("SIZE ARRAY: %d"), IncMAXArray_RecastBuildRegions.Num());
 

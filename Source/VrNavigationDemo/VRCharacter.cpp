@@ -354,14 +354,17 @@ void AVRCharacter::SaveToFileForStudyingPerformance()
 {
 	for (TActorIterator<APerformanceProfiler> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
 
-		if (NavMeshType == ENavMeshTypeController::SINGLEMODE)
-			ActorItr->SaveArrayToFile("SingleMode.csv", true);	
+		if (ActorItr->MaxNumberOfTicks == ActorItr->CurrentTick)
+		{
+			if (NavMeshType == ENavMeshTypeController::SINGLEMODE)
+				ActorItr->SaveArrayToFile("SingleMode.csv", true);
 
-		if (NavMeshType == ENavMeshTypeController::ONEFLOOR)
-			ActorItr->SaveArrayToFile("OneFloor.csv", true);
+			if (NavMeshType == ENavMeshTypeController::ONEFLOOR)
+				ActorItr->SaveArrayToFile("OneFloorOptimization.csv", true);
 
-		if (NavMeshType == ENavMeshTypeController::MULTIPLEFLOOR)
-			ActorItr->SaveArrayToFile("MultipleFloor.csv", true);
+			if (NavMeshType == ENavMeshTypeController::MULTIPLEFLOOR)
+				ActorItr->SaveArrayToFile("MultipleFloor.csv", true);
+		}
 	}
 }
 

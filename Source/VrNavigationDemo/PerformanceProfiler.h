@@ -36,8 +36,8 @@ private:
 	TArray<FString> IncAVGArray_Navigation_GenerateNavigationDataLayer;
 	TArray<FString> IncMAXArray_Navigation_GenerateNavigationDataLayer;
 
-	TArray<FString> IncAVGArray_Navigation_RecastMemory;
-	TArray<FString> IncMAXArray_Navigation_RecastMemory;
+	/*TArray<FString> IncAVGArray_Navigation_RecastMemory;
+	TArray<FString> IncMAXArray_Navigation_RecastMemory;*/
 
 	TArray<FString> IncAVGArray_RecastBuildRegions;
 	TArray<FString> IncMAXArray_RecastBuildRegions;
