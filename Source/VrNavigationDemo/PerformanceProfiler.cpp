@@ -18,8 +18,7 @@ APerformanceProfiler::APerformanceProfiler()
 // Called when the game starts or when spawned
 void APerformanceProfiler::BeginPlay()
 {
-	Super::BeginPlay();
-	
+	Super::BeginPlay();	
 }
 
 // Called every frame
@@ -27,10 +26,8 @@ void APerformanceProfiler::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
 	if (CurrentTick < MaxNumberOfTicks)
 	{
-		//UE_LOG(LogTemp, Error, TEXT("STO PROFILANDO"));
 		GetAllProfilingData();
 		CurrentTick++;
 	}
@@ -51,19 +48,6 @@ void APerformanceProfiler::GetAllProfilingData()
 	//GetNavigationProfilingData("STAT_Navigation_RecastMemory", &IncMAXArray_Navigation_RecastMemory, EComplexStatField::ExcAve);
 	GetNavigationProfilingData("STAT_Navigation_RecastBuildRegions", &IncAVGArray_RecastBuildRegions, EComplexStatField::IncAve);
 	GetNavigationProfilingData("STAT_Navigation_RecastBuildRegions", &IncMAXArray_RecastBuildRegions, EComplexStatField::IncMax);
-	/*GetNavigationProfilingData("STAT_Navigation_RecastBuildRegions");
-	GetNavigationProfilingData("STAT_Navigation_TickAsyncBuild");
-	//Manca Recast: create filters
-	GetNavigationProfilingData("STAT_Navigation_RecastBuildCompactHeightField");
-	GetNavigationProfilingData("STAT_Navigation_RecastBuildPolyDetail");
-	GetNavigationProfilingData("STAT_Navigation_FilterLedgeSpans");
-	GetNavigationProfilingData("STAT_Navigation_RecastRasterizeTriangles");
-	GetNavigationProfilingData("STAT_Navigation_RecastErodeWalkable");
-	GetNavigationProfilingData("STAT_Navigation_RecastBuildTileCache");
-	GetNavigationProfilingData("STAT_Navigation_RecastBuildContours");
-	GetNavigationProfilingData("STAT_Navigation_TickMarkDirty");
-	GetNavigationProfilingData("STAT_Navigation_RecastCreateHeightField");*/
-	//UE_LOG
 }
 
 
@@ -74,8 +58,10 @@ void APerformanceProfiler::GetNavigationProfilingData(FString Stat, TArray<FStri
 	{
 		if (ViewData->NameToStatMap.FindRef(FName(Stat)))
 		{
-			auto stat_data = ViewData->NameToStatMap.FindRef(FName(Stat))->GetValue_int64(DataType);
-			Array->Add(FString::FromInt(stat_data / 10000));
+			int32 stat_data = int32(ViewData->NameToStatMap.FindRef(FName(Stat))->GetValue_int64(DataType));
+			FString final_value = FString::SanitizeFloat(float(stat_data) / 10000);
+
+			Array->Add(final_value);
 		}			
 	}
 	else
@@ -83,7 +69,6 @@ void APerformanceProfiler::GetNavigationProfilingData(FString Stat, TArray<FStri
 		UE_LOG(LogTemp, Error, TEXT("Start STAT Navigation first!!"));
 		Array->Add("0");
 	}
-
 }
 
 
@@ -113,10 +98,6 @@ bool APerformanceProfiler::SaveArrayToFile(FString Filename, bool AllowOverWriti
 			IncMAXArray_Navigation_GenerateNavigationDataLayer,\
 			IncAVGArray_RecastBuildRegions,\
 			IncMAXArray_RecastBuildRegions";
-
-
-			/*STAT_Navigation_RecastMemory\
-			STAT_Navigation_RecastMemory"\*/
 	Text += LINE_TERMINATOR;
 
 	
@@ -131,7 +112,7 @@ bool APerformanceProfiler::SaveArrayToFile(FString Filename, bool AllowOverWriti
 		IncAVGArray_Navigation_GenerateNavigationDataLayer.Num() == MaxNumberOfTicks &&
 		IncMAXArray_Navigation_GenerateNavigationDataLayer.Num() == MaxNumberOfTicks &&
 		IncAVGArray_RecastBuildRegions.Num() == MaxNumberOfTicks &&
-		IncMAXArray_RecastBuildRegions.Num())
+		IncMAXArray_RecastBuildRegions.Num() == MaxNumberOfTicks)
 	{
 		for (int i = 0; i < CurrentTick; i++)
 		{

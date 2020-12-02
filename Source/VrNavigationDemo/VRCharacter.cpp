@@ -60,7 +60,7 @@ void AVRCharacter::BeginPlay()
 	bCanTeleport = false;
 	bAlreadyTeleported = false;
 
-	NavController = NavMeshController(GetWorld(), NavMeshType);
+	NavController = NavMeshController(GetWorld(), NavMeshType, bOptimizeNavMesh);
 }
 
 // Called every frame
@@ -90,7 +90,6 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction(TEXT("SpawnProceduralMeshWithCollision"), IE_Released, this, &AVRCharacter::SpawnProceduralMeshWithCollision);
 	PlayerInputComponent->BindAction(TEXT("SpawnDefaultProceduralMesh"), IE_Released, this, &AVRCharacter::SpawnDefaultProceduralMesh);
 	PlayerInputComponent->BindAction(TEXT("SpawnNavMesh"), IE_Released, this, &AVRCharacter::SpawnNavMesh);
-	PlayerInputComponent->BindAction(TEXT("OptimizeNavMesh"), IE_Released, this, &AVRCharacter::CallOptimizeNavMesh);
 	PlayerInputComponent->BindAction(TEXT("SaveToFile"), IE_Released, this, &AVRCharacter::SaveToFileForStudyingPerformance);
 	//TO DO: implementare spawn procedural mesh normali
 }
@@ -289,7 +288,7 @@ void AVRCharacter::SpawnProceduralMesh()
 		FRotator Rotation(0.0f, 0.0f, 0.0f);
 		FActorSpawnParameters SpawnInfo;
 
-		GetWorld()->SpawnActor<AProceduralMeshWithBoxCollider>(BP_ProceduralMeshWithBoxCollider, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
+		GetWorld()->SpawnActor<AProceduralMeshWithBoxCollider>(BP_ProceduralMeshWithBoxCollider, LastUsefullPositionForTeleport, Rotation, SpawnInfo);
 	}
 }
 
@@ -302,7 +301,7 @@ void AVRCharacter::SpawnProceduralMeshWithCollision()
 		FRotator Rotation(0.0f, 0.0f, 0.0f);
 		FActorSpawnParameters SpawnInfo;
 
-		GetWorld()->SpawnActor<AProceduralMeshWithBoxCollider>(BP_ProceduralMeshWithBoxColliderWithCollision, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
+		GetWorld()->SpawnActor<AProceduralMeshWithBoxCollider>(BP_ProceduralMeshWithBoxColliderWithCollision, LastUsefullPositionForTeleport, Rotation, SpawnInfo);
 	}
 }
 
@@ -318,7 +317,7 @@ void AVRCharacter::SpawnDefaultProceduralMesh()
 		FRotator Rotation(0.0f, 0.0f, 0.0f);
 		FActorSpawnParameters SpawnInfo;
 
-		GetWorld()->SpawnActor<AProceduralMeshDefault>(BP_ProceduralMeshDefault, FVector(0.f,0.f,0.f), Rotation, SpawnInfo);
+		GetWorld()->SpawnActor<AProceduralMeshDefault>(BP_ProceduralMeshDefault, LastUsefullPositionForTeleport + FVector(0.f, 0.f, 50.f), Rotation, SpawnInfo);
 	}
 }
 
@@ -328,25 +327,13 @@ void AVRCharacter::SpawnNavMesh()
 	NavController.ChangeCurrentFloor(CurrentFloorForTesting);
 	NavController.RefreshNavMeshBounds();
 
-	/*for (TActorIterator<APerformanceProfiler> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
-		ActorItr->GetNavigationBuildTime();
-	}*/
-
-
 	if (NavMeshType == ENavMeshTypeController::ONEFLOOR)
 	{
 		if (CurrentFloorForTesting < NavController.FloorsNumber - 1)
 			CurrentFloorForTesting++;
 		else
 			CurrentFloorForTesting = 0;
-	}
-		
-}
-
-void AVRCharacter::CallOptimizeNavMesh()
-{
-	OptimizeNavMeshScene Optimizer = OptimizeNavMeshScene(GetWorld());
-	Optimizer.OptimizeAllMesh();
+	}		
 }
 
 
@@ -356,14 +343,28 @@ void AVRCharacter::SaveToFileForStudyingPerformance()
 
 		if (ActorItr->MaxNumberOfTicks == ActorItr->CurrentTick)
 		{
-			if (NavMeshType == ENavMeshTypeController::SINGLEMODE)
-				ActorItr->SaveArrayToFile("SingleMode.csv", true);
+			if (bOptimizeNavMesh)
+			{
+				if (NavMeshType == ENavMeshTypeController::SINGLEMODE)
+					ActorItr->SaveArrayToFile("SingleModeOptimization.csv", true);
 
-			if (NavMeshType == ENavMeshTypeController::ONEFLOOR)
-				ActorItr->SaveArrayToFile("OneFloorOptimization.csv", true);
+				if (NavMeshType == ENavMeshTypeController::ONEFLOOR)
+					ActorItr->SaveArrayToFile("OneFloorOptimization.csv", true);
 
-			if (NavMeshType == ENavMeshTypeController::MULTIPLEFLOOR)
-				ActorItr->SaveArrayToFile("MultipleFloor.csv", true);
+				if (NavMeshType == ENavMeshTypeController::MULTIPLEFLOOR)
+					ActorItr->SaveArrayToFile("MultipleFloorOptimization.csv", true);
+			}
+			else
+			{
+				if (NavMeshType == ENavMeshTypeController::SINGLEMODE)
+					ActorItr->SaveArrayToFile("SingleModeNoOptimization.csv", true);
+
+				if (NavMeshType == ENavMeshTypeController::ONEFLOOR)
+					ActorItr->SaveArrayToFile("OneFloorNoOptimization.csv", true);
+
+				if (NavMeshType == ENavMeshTypeController::MULTIPLEFLOOR)
+					ActorItr->SaveArrayToFile("MultipleFloorNoOptimization.csv", true);
+			}
 		}
 	}
 }

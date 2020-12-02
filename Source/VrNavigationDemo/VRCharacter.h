@@ -45,7 +45,7 @@ private:
 	bool bCanUseMouseInputForCamera = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	bool bDifferentNavMeshForDifferentFloor;
+	bool bOptimizeNavMesh;
 
 	UPROPERTY()
 	class USceneComponent* RootVR;
@@ -134,6 +134,5 @@ private:
 	void SpawnProceduralMeshWithCollision();
 	void SpawnDefaultProceduralMesh();
 	void SpawnNavMesh();
-	void CallOptimizeNavMesh();
 	void SaveToFileForStudyingPerformance();
 };

@@ -7,12 +7,11 @@
 #include "NavMesh/RecastNavMesh.h"
 #include "EngineUtils.h"
 #include "NavigationSystem.h"
-#include <VrNavigationDemo\OptimizeNavMeshScene.h>
 #include <VrNavigationDemo\NavMeshSceneBounds.h>
 #include <VrNavigationDemo\PerformanceProfiler.h>
 
 
-NavMeshController::NavMeshController()
+NavMeshController::NavMeshController():Optimizer(nullptr)
 {
 }
 
@@ -21,56 +20,17 @@ NavMeshController::~NavMeshController()
 {
 }
 
-NavMeshController::NavMeshController(UWorld* NewWorld, bool bDifferentNavMeshForDifferentFloor)
-{
 
-	this->World = NewWorld;
-
-	if (World != nullptr)
-	{
-		this->navigationSystemV1 = UNavigationSystemV1::GetNavigationSystem(World);
-
-
-		SceneBounds = NavMeshSceneBounds(World, *this);
-		FloorsNumber = SceneBounds.GetNumberOfFloors();
-
-		UE_LOG(LogTemp, Error, TEXT("FLAG: %d"), bDifferentNavMeshForDifferentFloor);
-
-		int i = 0;
-		for (TActorIterator<ANavMeshBoundsVolume> ActorItr(World); i < FloorsNumber && ActorItr; ++ActorItr, i++) {
-
-			arrayOfNavMeshBoundsVolume.AddUnique(*ActorItr);
-			FVector Origin;
-			InitialNavMeshBound;
-			ActorItr->GetActorBounds(false, Origin, InitialNavMeshBound);
-
-			InitialNavMeshBound = InitialNavMeshBound * 2;
-
-			if (!bDifferentNavMeshForDifferentFloor)
-				break;
-		}
-
-		
-		//SpawnNavMesh();
-		//OptimizeScene();
-		//SetupNavMeshSettings();
-	}
-	else
-		UE_LOG(LogTemp, Error, TEXT("No World Reference."));
-
-}
-
-
-NavMeshController::NavMeshController(UWorld* NewWorld, ENavMeshTypeController NavMeshType)
+NavMeshController::NavMeshController(UWorld* NewWorld, ENavMeshTypeController NavMeshType, bool bOptimize):Optimizer(NewWorld)
 {
 	this->World = NewWorld;
 
 	this->NavMeshMode = NavMeshType;
 
+
 	if (World != nullptr)
 	{
-		this->navigationSystemV1 = UNavigationSystemV1::GetNavigationSystem(World);
-
+		this->NavigationSystemV1 = UNavigationSystemV1::GetNavigationSystem(World);
 
 		SceneBounds = NavMeshSceneBounds(World, *this );
 		FloorsNumber = SceneBounds.GetNumberOfFloors();
@@ -80,32 +40,23 @@ NavMeshController::NavMeshController(UWorld* NewWorld, ENavMeshTypeController Na
 		int i = 0;
 		for (TActorIterator<ANavMeshBoundsVolume> ActorItr(World); i < FloorsNumber && ActorItr; ++ActorItr, i++) {
 
-			arrayOfNavMeshBoundsVolume.AddUnique(*ActorItr);
+			ArrayOfNavMeshBoundsVolume.AddUnique(*ActorItr);
 			FVector Origin;
-			InitialNavMeshBound;
-			ActorItr->GetActorBounds(false, Origin, InitialNavMeshBound);
+			FVector InitialBound;
+			ActorItr->GetActorBounds(false, Origin, InitialBound);
 
-			InitialNavMeshBound = InitialNavMeshBound * 2;
+			InitialBound = InitialBound * 2;
+			InitialNavMeshBound.Add(InitialBound);
+
 
 			if (NavMeshMode == ENavMeshTypeController::SINGLEMODE || NavMeshMode == ENavMeshTypeController::ONEFLOOR)
 				break;
 		}
 
-		//OptimizeScene();
-
+		this->bOptimize = bOptimize;
 	}
 	else
 		UE_LOG(LogTemp, Error, TEXT("No World Reference."));
-}
-
-
-void NavMeshController::OptimizeScene()
-{
-	if (World != nullptr)
-	{
-		OptimizeNavMeshScene Optimizer = OptimizeNavMeshScene(World);
-		Optimizer.OptimizeAllMesh();
-	}
 }
 
 
@@ -129,47 +80,58 @@ void NavMeshController::SetupNavMeshSettings()
 
 void NavMeshController::RefreshNavMeshBounds()
 {
-	if (World != nullptr && navigationSystemV1 != nullptr)
+	if (World != nullptr && NavigationSystemV1 != nullptr)
 	{
 
 		for (TActorIterator<APerformanceProfiler> ActorItr(World); ActorItr; ++ActorItr) {
 			ActorItr->ResetTick();
 		}
 
-		FVector NewMeshPosition;
-		FVector NewNavMeshScale;
+		
 
-		for (ANavMeshBoundsVolume* Volume : arrayOfNavMeshBoundsVolume)
+		for (ANavMeshBoundsVolume* Volume : ArrayOfNavMeshBoundsVolume)
 		{
-			
+
+			FVector NewMeshPosition;
+			FVector NewNavMeshScale;
+
 
 			Volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-
-			/*FVector Origin;
-			FVector BoxExtent;
-			Volume->GetActorBounds(false, Origin, BoxExtent);*/
-
 			
 			NewMeshPosition = SceneBounds.GetOptimalNavMeshPosition(CurrentFloor);
+			
+
+			
+
 			Volume->SetActorLocation(NewMeshPosition);
 
-			//BoxExtent = BoxExtent * 2;
 			NewNavMeshScale = SceneBounds.GetNavMeshBounds(Volume->GetActorLocation(), CurrentFloor);
 
-			UE_LOG(LogTemp, Error, TEXT("BoxExtent: %s"), *InitialNavMeshBound.ToString());
+			UE_LOG(LogTemp, Error, TEXT("ENTRO QUA: %s"), *NewMeshPosition.ToString());
 
-			NewNavMeshScale = FVector(NewNavMeshScale.X / InitialNavMeshBound.X, NewNavMeshScale.Y / InitialNavMeshBound.Y, NewNavMeshScale.Z / InitialNavMeshBound.Z);
-			
+			if(NavMeshMode == ENavMeshTypeController::MULTIPLEFLOOR)
+				NewNavMeshScale = FVector(NewNavMeshScale.X / InitialNavMeshBound[CurrentFloor].X, NewNavMeshScale.Y / InitialNavMeshBound[CurrentFloor].Y, NewNavMeshScale.Z / InitialNavMeshBound[CurrentFloor].Z);
+			else
+				NewNavMeshScale = FVector(NewNavMeshScale.X / InitialNavMeshBound[0].X, NewNavMeshScale.Y / InitialNavMeshBound[0].Y, NewNavMeshScale.Z / InitialNavMeshBound[0].Z);
+
+			UE_LOG(LogTemp, Error, TEXT("SIZE: %d"), InitialNavMeshBound.Num());
 			Volume->SetActorRelativeScale3D(NewNavMeshScale);
 			Volume->GetRootComponent()->UpdateBounds();
 			Volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
-			navigationSystemV1->OnNavigationBoundsUpdated(Volume);
+			//navigationSystemV1->CleanUp();
 
+			if (bOptimize)
+				Optimizer.ClearNavMesh();
 			
 
+			NavigationSystemV1->OnNavigationBoundsUpdated(Volume);
+		
+
+			if (bOptimize)
+				Optimizer.OptimizeAllMesh(SceneBounds.GetMinFloorHeight(), SceneBounds.GetMaxFloorHeight());
+
 			CurrentFloor++;
-			//UE_LOG(LogTemp, Error, TEXT("Number of NavMeshVolume: %i"), arrayOfNavMeshBoundsVolume.Num());
 		}
 	}
 }
@@ -178,7 +140,7 @@ void NavMeshController::RefreshNavMeshBounds()
 void NavMeshController::SpawnNavMesh()
 {
 	//Non funziona lo spawn del navmesh a runtime
-	if (World != nullptr)
+	/*if (World != nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("SPAWN"));
 
@@ -195,7 +157,7 @@ void NavMeshController::SpawnNavMesh()
 		Volume->GetRootComponent()->RegisterComponent();
 		navigationSystemV1->OnNavigationBoundsUpdated(Volume);
 		//World->SpawnActor<ARecastNavMesh>(RecastNavmesh, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
-	}
+	}*/
 }
 
 

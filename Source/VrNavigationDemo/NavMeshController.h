@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "OptimizeNavMeshScene.h"
 #include "NavMeshSceneBounds.h"
+
 
 /**
  * 
@@ -21,10 +23,8 @@ class VRNAVIGATIONDEMO_API NavMeshController
 {
 public:
 	NavMeshController();
-
-	NavMeshController(UWorld*, bool bDifferentNavMeshForDifferentFloor);
 	
-	NavMeshController(UWorld*, ENavMeshTypeController bDifferentNavMeshForDifferentFloor);
+	NavMeshController(UWorld*, ENavMeshTypeController bDifferentNavMeshForDifferentFloor, bool bOptimize);
 
 	~NavMeshController();
 
@@ -52,24 +52,27 @@ private:
 	class ARecastNavMesh* RecastNavmesh;
 
 	UPROPERTY()
-	class UNavigationSystemV1* navigationSystemV1 = nullptr;
+	class UNavigationSystemV1* NavigationSystemV1 = nullptr;
 
 	UPROPERTY()
-	TArray<class ANavMeshBoundsVolume*> arrayOfNavMeshBoundsVolume;
+	TArray<class ANavMeshBoundsVolume*> ArrayOfNavMeshBoundsVolume;
 
 	UPROPERTY()
 	int CurrentFloor;
 
 	UPROPERTY()
-	FVector InitialNavMeshBound;
+	TArray<FVector> InitialNavMeshBound;
 
 	UPROPERTY()
 	NavMeshSceneBounds SceneBounds;
 
-	
+	UPROPERTY()
+	OptimizeNavMeshScene Optimizer;
+		
+	UPROPERTY()
+	bool bOptimize;
 
 private:
-	void OptimizeScene();
 	void SetupNavMeshSettings();
 	void SpawnNavMesh();
 };

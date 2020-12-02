@@ -87,7 +87,7 @@ TArray<AActor* > NavMeshSceneBounds::GetAllSceneActors()
 	return ActorsList;
 }
 
-void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinFloorHeight, float MaxFloorHeight)
+void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinHeight, float MaxHeight)
 {
 	if(ActorsArray.Num() == 0)
 		ActorsArray = GetAllSceneActors();
@@ -121,8 +121,8 @@ void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinFloor
 
 
 		if (bSingleMode ||
-			((Origin.Z < MaxFloorHeight - BoundsDifference.Z && Origin.Z > MinFloorHeight - BoundsDifference.Z) || 
-			(MaxFloorHeight < MinFloorHeight && Origin.Z > MinFloorHeight - BoundsDifference.Z)
+			((Origin.Z < MaxHeight - BoundsDifference.Z && Origin.Z > MinHeight - BoundsDifference.Z) || 
+			(MaxHeight < MinHeight && Origin.Z > MinHeight - BoundsDifference.Z)
 			))
 		{
 			//UE_LOG(LogTemp, Error, TEXT("Prendo questo actor: %s"), *Actor->GetName());
@@ -202,13 +202,17 @@ FVector NavMeshSceneBounds::GetOptimalNavMeshPosition(int Floor)
 	{
 		if (FloorsArrayOrigin.Num() > Floor + 1)
 		{
-			GetFloorBounds(FVector(0.f, 0.f, 0.f), FloorsArrayOrigin[Floor], FloorsArrayOrigin[Floor + 1]);
+			MinFloorHeight = FloorsArrayOrigin[Floor];
+			MaxFloorHeight = FloorsArrayOrigin[Floor + 1];
+			GetFloorBounds(FVector(0.f, 0.f, 0.f), MinFloorHeight, MaxFloorHeight);
 
 			//UE_LOG(LogTemp, Error, TEXT("Piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor], FloorsArrayOrigin[Floor + 1]);
 
 		}
 		else
 		{
+			MinFloorHeight = FloorsArrayOrigin[Floor];
+			MaxFloorHeight = -1.f;
 			GetFloorBounds(FVector(0.f, 0.f, 0.f), FloorsArrayOrigin[Floor], -1.f);
 			//UE_LOG(LogTemp, Error, TEXT("Ultimo piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor], -1.f);
 		}
@@ -279,6 +283,16 @@ int NavMeshSceneBounds::GetNumberOfFloors()
 	return FloorsArrayOrigin.Num();
 }
 
+float NavMeshSceneBounds::GetMinFloorHeight()
+{
+	return MinFloorHeight;
+}
+
+float NavMeshSceneBounds::GetMaxFloorHeight()
+{
+	return MaxFloorHeight;
+}
+
 void NavMeshSceneBounds::ResetBounds()
 {
 	MaxX = 0;
@@ -288,4 +302,7 @@ void NavMeshSceneBounds::ResetBounds()
 	MinX = 0;
 	MinY = 0;
 	MinZ = 0;
+
+	/*MinFloorHeight = 0;
+	MaxFloorHeight = 0;*/
 }

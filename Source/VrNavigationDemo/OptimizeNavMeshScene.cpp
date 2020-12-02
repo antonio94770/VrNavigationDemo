@@ -25,72 +25,86 @@ OptimizeNavMeshScene::~OptimizeNavMeshScene()
 }
 
 
-void OptimizeNavMeshScene::OptimizeAllMesh()
+void OptimizeNavMeshScene::OptimizeAllMesh(float MinFloorHeight, float MaxFloorHeight)
 {
 	if (World != nullptr)
 	{
 		for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr)
-		{		
-			if (ActorItr->Tags.Contains("Wall") || ActorItr->Tags.Contains("Pillar") || ActorItr->Tags.Contains("Object")) 
+		{	
+
+			FVector Origin;
+			FVector BoxExtent;
+			ActorItr->GetActorBounds(false, Origin, BoxExtent);
+
+			Origin.X = Origin.X;
+			Origin.Y = Origin.Y;
+			Origin.Z = Origin.Z;
+
+			//UE_LOG(LogTemp, Error, TEXT("Update box component for"));
+
+			if ((Origin.Z < MaxFloorHeight && Origin.Z > MinFloorHeight) || (MaxFloorHeight < MinFloorHeight && Origin.Z > MinFloorHeight))
 			{
-				TArray<UBoxComponent*> BoxComps;
-				ActorItr->GetComponents(BoxComps);
-
-				TArray<UStaticMeshComponent*> StaticComps;
-				ActorItr->GetComponents(StaticComps);
-
-				TArray<UProceduralMeshComponent*> ProceduralComps;
-				ActorItr->GetComponents(ProceduralComps);
-
-				if (BoxComps.Num() > 0)
+				if (ActorItr->Tags.Contains("Wall") || ActorItr->Tags.Contains("Pillar") || ActorItr->Tags.Contains("Object"))
 				{
-					//UE_LOG(LogTemp, Error, TEXT("ENTRO QUI."));
-					for (UBoxComponent* BoxElem : BoxComps)
+					TArray<UBoxComponent*> BoxComps;
+					ActorItr->GetComponents(BoxComps);
+
+					TArray<UStaticMeshComponent*> StaticComps;
+					ActorItr->GetComponents(StaticComps);
+
+					TArray<UProceduralMeshComponent*> ProceduralComps;
+					ActorItr->GetComponents(ProceduralComps);
+
+					if (BoxComps.Num() > 0)
 					{
-						for (UStaticMeshComponent* StaticElem : StaticComps)
+						//UE_LOG(LogTemp, Error, TEXT("ENTRO QUI."));
+						for (UBoxComponent* BoxElem : BoxComps)
 						{
-							UpdateMeshBounds(BoxElem, StaticElem);
-						}
-
-						for (UProceduralMeshComponent* ProcElem : ProceduralComps)
-						{
-							UpdateMeshBounds(BoxElem, ProcElem);
-						}
-						
-					}
-				}
-				else
-				{
-					//UE_LOG(LogTemp, Error, TEXT("No box for: %s"), *ActorItr->GetName());
-				
-
-					if (ProceduralComps.Num() > 0)
-						UpdateMeshWithBox(ActorItr, ProceduralComps);
-
-					if (StaticComps.Num() > 0)
-					{
-						
-						TArray<UStaticMeshComponent*> NewStaticComps;
-
-						for (UStaticMeshComponent* elem : StaticComps)
-						{
-							auto navCollision = Cast<UNavCollision>(elem->GetStaticMesh()->GetNavCollision());
-							navCollision->AreaClass;
-
-						
-							//UE_LOG(LogTemp, Error, TEXT("Devo vedere la static mesh %i"), elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle());
-
-							if (elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle() == false || navCollision->AreaClass != UNavArea_Null::StaticClass())
+							for (UStaticMeshComponent* StaticElem : StaticComps)
 							{
-								NewStaticComps.Add(elem);
+								UpdateMeshBounds(BoxElem, StaticElem);
 							}
+
+							for (UProceduralMeshComponent* ProcElem : ProceduralComps)
+							{
+								UpdateMeshBounds(BoxElem, ProcElem);
+							}
+
 						}
-
-						if(NewStaticComps.Num() > 0)
-							UpdateMeshWithBox(ActorItr, NewStaticComps);
 					}
-				}
+					else
+					{
+						//UE_LOG(LogTemp, Error, TEXT("No box for: %s"), *ActorItr->GetName());
 
+
+						if (ProceduralComps.Num() > 0)
+							UpdateMeshWithBox(ActorItr, ProceduralComps);
+
+						if (StaticComps.Num() > 0)
+						{
+
+							TArray<UStaticMeshComponent*> NewStaticComps;
+
+							for (UStaticMeshComponent* elem : StaticComps)
+							{
+								auto navCollision = Cast<UNavCollision>(elem->GetStaticMesh()->GetNavCollision());
+								navCollision->AreaClass;
+
+
+								//UE_LOG(LogTemp, Error, TEXT("Devo vedere la static mesh %i"), elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle());
+
+								if (elem->GetStaticMesh()->GetNavCollision()->IsDynamicObstacle() == false || navCollision->AreaClass != UNavArea_Null::StaticClass())
+								{
+									NewStaticComps.Add(elem);
+								}
+							}
+
+							if (NewStaticComps.Num() > 0)
+								UpdateMeshWithBox(ActorItr, NewStaticComps);
+						}
+					}
+
+				}
 			}
 		}
 	}
@@ -113,6 +127,14 @@ void OptimizeNavMeshScene::UpdateMeshWithBox(TActorIterator<AActor> const& Actor
 
 			CollisionMesh->RegisterComponent();
 		}
+	}
+}
+
+void OptimizeNavMeshScene::ClearNavMesh()
+{
+	for (TActorIterator<AActor> ActorItr(World); ActorItr; ++ActorItr) {
+		if (!ActorItr->Tags.Contains("Floor") && NavigationSystemV1 != nullptr)
+			NavigationSystemV1->ClearNavOctreeAll(*ActorItr);
 	}
 }
 
@@ -148,9 +170,10 @@ void OptimizeNavMeshScene::UpdateMeshBounds(UBoxComponent* const &CollisionMesh,
 
 		if (CollisionMesh->Bounds.BoxExtent != Mesh->Bounds.BoxExtent)
 		{	
-			CollisionMesh->SetBoxExtent(Mesh->Bounds.BoxExtent);
-			NavigationSystemV1->UpdateComponentInNavOctree(*CollisionMesh);			
-			UE_LOG(LogTemp, Error, TEXT("Update box component for: %s"), *Mesh->GetName());
+			CollisionMesh->SetBoxExtent(Mesh->Bounds.BoxExtent);			
 		}
+
+		NavigationSystemV1->UpdateComponentInNavOctree(*CollisionMesh);
+		UE_LOG(LogTemp, Error, TEXT("Update box component for: %s"), *Mesh->GetName());
 	}
 }

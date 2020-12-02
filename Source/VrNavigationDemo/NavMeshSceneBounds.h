@@ -47,7 +47,13 @@ public:
 	
 	UFUNCTION()
 	int GetNumberOfFloors();
-		
+
+	UFUNCTION()
+	float GetMinFloorHeight();
+
+	UFUNCTION()
+	float GetMaxFloorHeight();
+
 	UFUNCTION()
 	void ResetBounds();
 
@@ -73,4 +79,10 @@ private:
 
 	UPROPERTY()
 	bool bSingleMode = false;
+
+	UPROPERTY()
+	float MinFloorHeight; 
+		
+	UPROPERTY()
+	float MaxFloorHeight;
 };

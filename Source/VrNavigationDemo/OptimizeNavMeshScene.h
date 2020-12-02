@@ -19,11 +19,11 @@ private:
 	class UNavigationSystemV1* NavigationSystemV1;
 
 public:
-	OptimizeNavMeshScene(UWorld* );
+	OptimizeNavMeshScene(UWorld* World);
 	~OptimizeNavMeshScene();
 
 	UFUNCTION()
-	void OptimizeAllMesh();
+	void OptimizeAllMesh(float MinFloorHeight, float MaxFloorHeight);
 
 	template <class T>
 	UFUNCTION()
@@ -36,5 +36,8 @@ public:
 	template <class T>
 	UFUNCTION()
 	void UpdateMeshWithBox(TActorIterator<AActor> const& , const TArray<T*>& );
+
+	UFUNCTION()
+	void ClearNavMesh();
 
 };
