@@ -6,6 +6,10 @@
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "HAL/PlatformFilemanager.h"
+#include "NavigationSystem.h"
+#include "AI/NavDataGenerator.h"
+#include "NavMesh/RecastHelpers.h"
+#include "AI/NavigationSystemHelpers.h"
 
 // Sets default values
 APerformanceProfiler::APerformanceProfiler()
@@ -74,8 +78,7 @@ void APerformanceProfiler::GetNavigationProfilingData(FString Stat, TArray<FStri
 
 bool APerformanceProfiler::SaveArrayToFile(FString Filename, bool AllowOverWriting /*= true*/)
 {
-	FString SaveDirectory = FPaths::ProjectContentDir() + "\\" + Filename;
-
+	/*FString SaveDirectory = FPaths::ProjectContentDir() + "\\" + Filename;
 	UE_LOG(LogTemp, Error, TEXT("Path: %s"), *SaveDirectory);
 
 
@@ -142,7 +145,44 @@ bool APerformanceProfiler::SaveArrayToFile(FString Filename, bool AllowOverWriti
 	UE_LOG(LogTemp, Error, TEXT("SIZE ARRAY: %d"), IncMAXArray_RecastBuildRegions.Num());
 
 
-	return FFileHelper::SaveStringToFile(Text, *SaveDirectory);
+	return FFileHelper::SaveStringToFile(Text, *SaveDirectory);*/
+
+	class UNavigationSystemV1* NavSys = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+	if (NavSys)
+	{
+		for (ANavigationData* NavData : NavSys->NavDataSet)
+		{
+			if (const FNavDataGenerator* Generator = NavData->GetGenerator())
+			{
+				//FNavMeshBuildContext context = FNavMeshBuildContext(Generator);
+				//context
+			}
+		}
+	}
+	
+
+	return true;
+}
+
+
+
+
+
+void APerformanceProfiler::DebugNavigationData(FString Filename)
+{
+	FString SaveDirectory = FPaths::ProjectContentDir();
+
+	class UNavigationSystemV1* NavSys = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+	if (NavSys)
+	{
+		for (ANavigationData* NavData : NavSys->NavDataSet)
+		{
+			if (const FNavDataGenerator* Generator = NavData->GetGenerator())
+			{
+				Generator->ExportNavigationData(FString::Printf(TEXT("%s/%s"), *SaveDirectory, *NavData->GetName()));
+			}
+		}
+	}
 }
 
 

@@ -96,12 +96,6 @@ void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinHeigh
 	float ActorYMax, ActorYMin;
 	float ActorZMax, ActorZMin;
 
-
-	/*float X;
-	float Y;
-	float Z;*/
-
-
 	bool firstObject = false;
 
 	ResetBounds();
@@ -116,8 +110,6 @@ void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinHeigh
 		Origin.X = Origin.X - BoundsDifference.X;
 		Origin.Y = Origin.Y - BoundsDifference.Y;
 		Origin.Z = Origin.Z - BoundsDifference.Z;
-
-		//UE_LOG(LogTemp, Error, TEXT("MESH TYPE: %f"), NavMeshControllerInstance->NavMeshType)
 
 
 		if (bSingleMode ||
@@ -146,7 +138,6 @@ void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinHeigh
 				MaxZ = ActorZMax;
 				MinZ = ActorZMin;
 				firstObject = true;
-				//UE_LOG(LogTemp, Error, TEXT("ENTRA QUI"));
 			}
 
 			else

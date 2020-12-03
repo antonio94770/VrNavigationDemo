@@ -49,6 +49,7 @@ public:
 	void GetAllProfilingData();
 	void ResetTick();
 	bool SaveArrayToFile(FString Filename, bool AllowOverWriting = true);
+	void DebugNavigationData(FString Filename);
 
 public:
 	int32 MaxNumberOfTicks = 100;

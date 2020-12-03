@@ -317,7 +317,9 @@ void AVRCharacter::SpawnDefaultProceduralMesh()
 		FRotator Rotation(0.0f, 0.0f, 0.0f);
 		FActorSpawnParameters SpawnInfo;
 
-		GetWorld()->SpawnActor<AProceduralMeshDefault>(BP_ProceduralMeshDefault, LastUsefullPositionForTeleport + FVector(0.f, 0.f, 50.f), Rotation, SpawnInfo);
+		auto ActorSpawned = GetWorld()->SpawnActor<AProceduralMeshDefault>(BP_ProceduralMeshDefault, LastUsefullPositionForTeleport + FVector(0.f, 0.f, 50.f), Rotation, SpawnInfo);
+		OptimizeNavMeshScene Optimizer = OptimizeNavMeshScene(GetWorld());
+		Optimizer.OptimizeSingleNavMeshActor(ActorSpawned);
 	}
 }
 

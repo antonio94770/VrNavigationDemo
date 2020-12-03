@@ -25,6 +25,9 @@ public:
 	UFUNCTION()
 	void OptimizeAllMesh(float MinFloorHeight, float MaxFloorHeight);
 
+	UFUNCTION()
+	void OptimizeSingleNavMeshActor(AActor* Actor);
+
 	template <class T>
 	UFUNCTION()
 	void UpdateSpecificMeshWithBox(TActorIterator<AActor> const&, T* const&);
@@ -35,7 +38,7 @@ public:
 		
 	template <class T>
 	UFUNCTION()
-	void UpdateMeshWithBox(TActorIterator<AActor> const& , const TArray<T*>& );
+	void UpdateMeshWithBox(AActor* , const TArray<T*>& );
 
 	UFUNCTION()
 	void ClearNavMesh();
