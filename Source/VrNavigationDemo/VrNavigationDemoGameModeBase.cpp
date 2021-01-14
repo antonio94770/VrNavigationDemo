@@ -6,7 +6,7 @@
 
 AVrNavigationDemoGameModeBase::AVrNavigationDemoGameModeBase()
 {
-	//UE_LOG(LogTemp, Error, TEXT("OK IT WORKS."));
+
 }
 
 

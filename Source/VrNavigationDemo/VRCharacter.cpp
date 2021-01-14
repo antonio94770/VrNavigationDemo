@@ -8,6 +8,7 @@
 #include "NavigationSystem.h"
 #include "MotionControllerComponent.h"
 #include "ProceduralMeshWithBoxCollider.h"
+#include "ProceduralMeshActor.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SplineComponent.h"
@@ -16,6 +17,7 @@
 #include <VrNavigationDemo\NavMeshController.h>
 #include "OptimizeNavMeshScene.h"
 #include "PerformanceProfiler.h"
+#include "NavModifierComponent.h"
 #include "EngineUtils.h"
 
 
@@ -73,8 +75,6 @@ void AVRCharacter::Tick(float DeltaTime)
 	AddActorWorldOffset(NewCameraOffset);
 	RootVR->AddWorldOffset(-NewCameraOffset);
 
-	//UE_LOG(LogTemp, Error, TEXT("Rotation: %s: "), *Camera->GetRelativeRotation().ToString());
-
 	UpdateDestinationMarker();
 }
 
@@ -86,15 +86,16 @@ void AVRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis(TEXT("Forward"), this, &AVRCharacter::ForwardMovement);
 	PlayerInputComponent->BindAxis(TEXT("Right"), this, &AVRCharacter::RightMovement);
 	PlayerInputComponent->BindAction(TEXT("Teleport"), IE_Released, this, &AVRCharacter::StartTeleport);
-	PlayerInputComponent->BindAction(TEXT("SpawnProceduralMesh"), IE_Released, this, &AVRCharacter::SpawnProceduralMesh);
-	PlayerInputComponent->BindAction(TEXT("SpawnProceduralMeshWithCollision"), IE_Released, this, &AVRCharacter::SpawnProceduralMeshWithCollision);
+	PlayerInputComponent->BindAction(TEXT("SpawnProceduralMeshNavModifier"), IE_Released, this, &AVRCharacter::SpawnProceduralMeshNavModifier);
 	PlayerInputComponent->BindAction(TEXT("SpawnDefaultProceduralMesh"), IE_Released, this, &AVRCharacter::SpawnDefaultProceduralMesh);
+	PlayerInputComponent->BindAction(TEXT("SpawnOptimizedProceduralMesh"), IE_Released, this, &AVRCharacter::SpawnOptimizedProceduralMesh);
 	PlayerInputComponent->BindAction(TEXT("SpawnNavMesh"), IE_Released, this, &AVRCharacter::SpawnNavMesh);
 	PlayerInputComponent->BindAction(TEXT("SaveToFile"), IE_Released, this, &AVRCharacter::SaveToFileForStudyingPerformance);
 	//TO DO: implementare spawn procedural mesh normali
 }
 
 
+/* Get our projectile trajectory based on vr or mouse, and we check if it points to a navmesh layer */
 bool AVRCharacter::FindTeleportDestination(TArray<FVector>& OutPath, FVector& OutLocation)
 {
 	FVector Start;
@@ -121,7 +122,7 @@ bool AVRCharacter::FindTeleportDestination(TArray<FVector>& OutPath, FVector& Ou
 		this
 	);
 	
-	ProjectileParams.DrawDebugType = EDrawDebugTrace::ForOneFrame;
+	//ProjectileParams.DrawDebugType = EDrawDebugTrace::ForOneFrame;
 	//ProjectileParams.bTraceComplex = true;
 
 	FPredictProjectilePathResult ProjectileResult;
@@ -143,7 +144,7 @@ bool AVRCharacter::FindTeleportDestination(TArray<FVector>& OutPath, FVector& Ou
 		OutPath.Add(PointData.Location);
 	}
 
-	UNavigationSystemV1* NavSystem = Cast<UNavigationSystemV1>(GetWorld()->GetNavigationSystem());
+	UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
 
 	FNavLocation NavLocation;
 	bool bOnNavSMesh = false;
@@ -158,6 +159,7 @@ bool AVRCharacter::FindTeleportDestination(TArray<FVector>& OutPath, FVector& Ou
 }
 
 
+/* Update our extent position and visibility, and our path, if we point to a navmesh layer */
 void AVRCharacter::UpdateDestinationMarker()
 {
 	
@@ -185,17 +187,7 @@ void AVRCharacter::UpdateDestinationMarker()
 }
 
 
-void AVRCharacter::StartCameraFade(float From, float To)
-{
-	APlayerController* PC = Cast<APlayerController>(GetController());
-
-	if (PC != nullptr)
-	{
-		PC->PlayerCameraManager->StartCameraFade(From, To, TeleportFadeTime, FLinearColor::Black);
-	}
-}
-
-
+/* Manage the start of a teleport */
 void AVRCharacter::StartTeleport()
 {
 	if (bCanTeleport && !bAlreadyTeleported)
@@ -210,6 +202,19 @@ void AVRCharacter::StartTeleport()
 }
 
 
+/* Fade of the camera when teleport start and end */
+void AVRCharacter::StartCameraFade(float From, float To)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+
+	if (PC != nullptr)
+	{
+		PC->PlayerCameraManager->StartCameraFade(From, To, TeleportFadeTime, FLinearColor::Black);
+	}
+}
+
+
+/* Manage the end of a teleport (Camera fade)*/
 void AVRCharacter::EndTeleport()
 {
 	FVector Destination = LastUsefullPositionForTeleport;
@@ -222,6 +227,7 @@ void AVRCharacter::EndTeleport()
 }
 
 
+/* We add path points to USplineComponent */
 void AVRCharacter::UpdateSpline(const TArray<FVector>& Path)
 {
 	TeleportPath->ClearSplinePoints(false);
@@ -237,6 +243,7 @@ void AVRCharacter::UpdateSpline(const TArray<FVector>& Path)
 }
 
 
+/* Update and draw of the path*/
 void AVRCharacter::DrawTeleportPath(const TArray<FVector>& Path)
 {
 	UpdateSpline(Path);
@@ -279,51 +286,88 @@ void AVRCharacter::DrawTeleportPath(const TArray<FVector>& Path)
 }
 
 
-void AVRCharacter::SpawnProceduralMesh()
+/* ONLY FOR TESTING: Spawn actor with NavModifier Component */
+void AVRCharacter::SpawnProceduralMeshNavModifier()
 {
 	FVector Location;
 	TArray<FVector> Path;
-	if (BP_ProceduralMeshWithBoxCollider != nullptr && FindTeleportDestination(Path, Location))
+	if (BP_ProceduralMeshNavModifier != nullptr && FindTeleportDestination(Path, Location))
 	{
+		for (TActorIterator<APerformanceProfiler> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+			ActorItr->ResetTick();
+		}
+
 		FRotator Rotation(0.0f, 0.0f, 0.0f);
 		FActorSpawnParameters SpawnInfo;
 
-		GetWorld()->SpawnActor<AProceduralMeshWithBoxCollider>(BP_ProceduralMeshWithBoxCollider, LastUsefullPositionForTeleport, Rotation, SpawnInfo);
+		auto ActorSpawned = GetWorld()->SpawnActor<AProceduralMeshActor>(BP_ProceduralMeshNavModifier, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
+		ActorSpawned->SetActorRelativeScale3D(FVector(5.f, 3.f, 2.f));
+
+		TArray<UNavModifierComponent*> NavModifiers;
+		ActorSpawned->GetComponents(NavModifiers);
+
+		for (auto elem : NavModifiers)
+		{
+			FVector Origin;
+			FVector BoxExtent;
+			ActorSpawned->GetActorBounds(false, Origin, BoxExtent);
+			elem->FailsafeExtent = BoxExtent;
+		}
+
+		bSpawnedMeshNavModifier = true;
 	}
 }
 
-void AVRCharacter::SpawnProceduralMeshWithCollision()
-{
-	FVector Location;
-	TArray<FVector> Path;
-	if (BP_ProceduralMeshWithBoxColliderWithCollision != nullptr && FindTeleportDestination(Path, Location))
-	{
-		FRotator Rotation(0.0f, 0.0f, 0.0f);
-		FActorSpawnParameters SpawnInfo;
 
-		GetWorld()->SpawnActor<AProceduralMeshWithBoxCollider>(BP_ProceduralMeshWithBoxColliderWithCollision, LastUsefullPositionForTeleport, Rotation, SpawnInfo);
-	}
-}
-
-
+/* ONLY FOR TESTING: Spawn Default actor */
 void AVRCharacter::SpawnDefaultProceduralMesh()
 {
 	FVector Location;
 	TArray<FVector> Path;
 	if (BP_ProceduralMeshDefault != nullptr && FindTeleportDestination(Path, Location))
 	{
+		for (TActorIterator<APerformanceProfiler> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+			ActorItr->ResetTick();
+		}
+
 		UE_LOG(LogTemp, Error, TEXT("SPAWN"));
 
 		FRotator Rotation(0.0f, 0.0f, 0.0f);
 		FActorSpawnParameters SpawnInfo;
 
-		auto ActorSpawned = GetWorld()->SpawnActor<AProceduralMeshDefault>(BP_ProceduralMeshDefault, LastUsefullPositionForTeleport + FVector(0.f, 0.f, 50.f), Rotation, SpawnInfo);
-		OptimizeNavMeshScene Optimizer = OptimizeNavMeshScene(GetWorld());
-		Optimizer.OptimizeSingleNavMeshActor(ActorSpawned);
+		auto ActorSpawned = GetWorld()->SpawnActor<AProceduralMeshDefault>(BP_ProceduralMeshDefault, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
+		ActorSpawned->SetActorRelativeScale3D(FVector(5.f, 3.f, 2.f));
+		bSpawnedDefaultMesh = true;
 	}
 }
 
 
+/* ONLY FOR TESTING: Spawn Optimized actor */
+void AVRCharacter::SpawnOptimizedProceduralMesh()
+{
+	FVector Location;
+	TArray<FVector> Path;
+	if (BP_ProceduralMeshOptimized != nullptr && FindTeleportDestination(Path, Location))
+	{
+		for (TActorIterator<APerformanceProfiler> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
+			ActorItr->ResetTick();
+		}
+
+		UE_LOG(LogTemp, Error, TEXT("SPAWN"));
+
+		FRotator Rotation(0.0f, 0.0f, 0.0f);
+		FActorSpawnParameters SpawnInfo;
+
+		auto ActorSpawned = GetWorld()->SpawnActor<AProceduralMeshDefault>(BP_ProceduralMeshOptimized, FVector(0.f, 0.f, 0.f), Rotation, SpawnInfo);
+		ActorSpawned->SetActorRelativeScale3D(FVector(5.f,3.f,2.f));
+		OptimizeNavMeshScene Optimizer = OptimizeNavMeshScene(GetWorld());
+		Optimizer.OptimizeSingleNavMeshActor(ActorSpawned);
+		bSpawnedOptimizedMesh = true;
+	}
+}
+
+
+/* Used for testing the navmesh and we increase the floor number*/
 void AVRCharacter::SpawnNavMesh()
 {
 	NavController.ChangeCurrentFloor(CurrentFloorForTesting);
@@ -339,13 +383,29 @@ void AVRCharacter::SpawnNavMesh()
 }
 
 
+/* Function to save stats output to a file based on optimization and on navmesh type */
 void AVRCharacter::SaveToFileForStudyingPerformance()
 {
 	for (TActorIterator<APerformanceProfiler> ActorItr(GetWorld()); ActorItr; ++ActorItr) {
 
 		if (ActorItr->MaxNumberOfTicks == ActorItr->CurrentTick)
 		{
-			if (bOptimizeNavMesh)
+			if (bSpawnedMeshNavModifier)
+			{
+				ActorItr->SaveArrayToFile("SpawnProceduralMeshNavModifier.csv", true);
+				bSpawnedMeshNavModifier = false;
+			}
+			else if (bSpawnedDefaultMesh)
+			{
+				ActorItr->SaveArrayToFile("SpawnDefaultProceduralMesh.csv", true);
+				bSpawnedDefaultMesh = false;
+			}
+			else if (bSpawnedOptimizedMesh)
+			{
+				ActorItr->SaveArrayToFile("SpawnOptimizedProceduralMesh.csv", true);
+				bSpawnedOptimizedMesh = false;
+			}
+			else if (bOptimizeNavMesh)
 			{
 				if (NavMeshType == ENavMeshTypeController::SINGLEMODE)
 					ActorItr->SaveArrayToFile("SingleModeOptimization.csv", true);
@@ -371,11 +431,13 @@ void AVRCharacter::SaveToFileForStudyingPerformance()
 	}
 }
 
+/* Forward Movement with keyboard */
 void AVRCharacter::ForwardMovement(float moveSpeed)
 {
 	AddMovementInput(moveSpeed * Camera->GetForwardVector());
 }
 
+/* Right Movement with keyboard */
 void AVRCharacter::RightMovement(float moveSpeed)
 {
 	AddMovementInput(moveSpeed * Camera->GetRightVector());

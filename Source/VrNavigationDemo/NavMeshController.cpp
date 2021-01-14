@@ -7,20 +7,54 @@
 #include "NavMesh/RecastNavMesh.h"
 #include "EngineUtils.h"
 #include "NavigationSystem.h"
-#include <VrNavigationDemo\NavMeshSceneBounds.h>
-#include <VrNavigationDemo\PerformanceProfiler.h>
+#include "NavMeshSceneBounds.h"
+#include "PerformanceProfiler.h"
 
 
-NavMeshController::NavMeshController():Optimizer(nullptr)
+//Never used
+NavMeshController::NavMeshController() :Optimizer(nullptr)
 {
 }
 
-
-NavMeshController::~NavMeshController()
+//Still not used but created for portability in DC
+NavMeshController::NavMeshController(UWorld* NewWorld) :Optimizer(NewWorld)
 {
+	this->World = NewWorld;
+
+	//Remove it in DC because we have only one type of mode
+	this->NavMeshMode = ENavMeshTypeController::ONEFLOOR;
+
+
+	if (World != nullptr)
+	{
+		this->NavigationSystemV1 = UNavigationSystemV1::GetNavigationSystem(World);
+
+		SceneBounds = NavMeshSceneBounds(World, *this);
+		FloorsNumber = SceneBounds.GetNumberOfFloors();
+
+		int i = 0;
+		for (TActorIterator<ANavMeshBoundsVolume> ActorItr(World); ActorItr; ++ActorItr) {
+
+			ArrayOfNavMeshBoundsVolume.AddUnique(*ActorItr);
+			FVector Origin;
+			FVector InitialBound;
+			ActorItr->GetActorBounds(false, Origin, InitialBound);
+
+			InitialBound = InitialBound * 2;
+			InitialNavMeshBound.Add(InitialBound);
+
+			break;
+		}
+
+		//Remove it in DC because we always Optimize the actors
+		this->bOptimize = true;
+	}
+	else
+		UE_LOG(LogTemp, Error, TEXT("No World Reference."));
 }
 
 
+//Constructor used for the complete test. In it we have a NavMeshSceneBounds instance
 NavMeshController::NavMeshController(UWorld* NewWorld, ENavMeshTypeController NavMeshType, bool bOptimize):Optimizer(NewWorld)
 {
 	this->World = NewWorld;
@@ -60,6 +94,14 @@ NavMeshController::NavMeshController(UWorld* NewWorld, ENavMeshTypeController Na
 }
 
 
+NavMeshController::~NavMeshController()
+{
+	ArrayOfNavMeshBoundsVolume.Empty();
+	InitialNavMeshBound.Empty();
+}
+
+
+//Edit recast parameters: NOT USED
 void NavMeshController::SetupNavMeshSettings()
 {
 	if (World != nullptr)
@@ -78,17 +120,16 @@ void NavMeshController::SetupNavMeshSettings()
 }
 
 
+//We start the profiling tick and we update the navmesh bounds based on floor bounds
 void NavMeshController::RefreshNavMeshBounds()
 {
 	if (World != nullptr && NavigationSystemV1 != nullptr)
 	{
-
 		for (TActorIterator<APerformanceProfiler> ActorItr(World); ActorItr; ++ActorItr) {
-			ActorItr->ResetTick();
+				ActorItr->ResetTick();
 		}
 
 		
-
 		for (ANavMeshBoundsVolume* Volume : ArrayOfNavMeshBoundsVolume)
 		{
 
@@ -97,17 +138,9 @@ void NavMeshController::RefreshNavMeshBounds()
 
 
 			Volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
-			
 			NewMeshPosition = SceneBounds.GetOptimalNavMeshPosition(CurrentFloor);
-			
-
-			
-
 			Volume->SetActorLocation(NewMeshPosition);
-
 			NewNavMeshScale = SceneBounds.GetNavMeshBounds(Volume->GetActorLocation(), CurrentFloor);
-
-			UE_LOG(LogTemp, Error, TEXT("ENTRO QUA: %s"), *NewMeshPosition.ToString());
 
 			if(NavMeshMode == ENavMeshTypeController::MULTIPLEFLOOR)
 				NewNavMeshScale = FVector(NewNavMeshScale.X / InitialNavMeshBound[CurrentFloor].X, NewNavMeshScale.Y / InitialNavMeshBound[CurrentFloor].Y, NewNavMeshScale.Z / InitialNavMeshBound[CurrentFloor].Z);
@@ -119,7 +152,6 @@ void NavMeshController::RefreshNavMeshBounds()
 			Volume->GetRootComponent()->UpdateBounds();
 			Volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
 
-			//navigationSystemV1->CleanUp();
 
 			if (bOptimize)
 				Optimizer.ClearNavMesh();
@@ -137,6 +169,7 @@ void NavMeshController::RefreshNavMeshBounds()
 }
 
 
+//NOT USED: Navmesh spawn doesn't work
 void NavMeshController::SpawnNavMesh()
 {
 	//Non funziona lo spawn del navmesh a runtime
@@ -161,6 +194,7 @@ void NavMeshController::SpawnNavMesh()
 }
 
 
+//Change current floor with new one, used from VRCharacter
 void NavMeshController::ChangeCurrentFloor(int NewFloor)
 {
 	this->CurrentFloor = NewFloor;

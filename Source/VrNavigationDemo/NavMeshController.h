@@ -8,7 +8,7 @@
 
 
 /**
- * 
+ * ENUM for navmesh type utilized for floor decision
  */
 
 UENUM()
@@ -22,57 +22,75 @@ enum class ENavMeshTypeController : uint8 {
 class VRNAVIGATIONDEMO_API NavMeshController
 {
 public:
+
 	NavMeshController();
+
+	NavMeshController(UWorld* NewWorld);
 	
-	NavMeshController(UWorld*, ENavMeshTypeController bDifferentNavMeshForDifferentFloor, bool bOptimize);
+	NavMeshController(UWorld* NewWorld, ENavMeshTypeController bDifferentNavMeshForDifferentFloor, bool bOptimize);
 
 	~NavMeshController();
 
 public:
 
+	//UFUNCTION()
 	void RefreshNavMeshBounds();
+
+	//UFUNCTION()
 	void ChangeCurrentFloor(int NewFloor);
 
 public:
-	UPROPERTY()
+
+	//Number of floors get from NavMeshSceneBounds.cpp, used from VRCharacter.cpp to check if can increase the current Floor Count
+	//UPROPERTY()
 	int FloorsNumber;
 
-	UPROPERTY()
+	//NavMeshMode to edit the behavior of the different modes
+	//UPROPERTY()
 	ENavMeshTypeController NavMeshMode;
 
 private:
-	UPROPERTY()
+	//Pointer to the current GetWorld()
+	//UPROPERTY()
 	class UWorld* World;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class ANavMeshBoundsVolume> NavMeshBoundsVolume;
-	//TSubclassOf<class ARecastNavMesh> RecastNavmesh;
-
-	UPROPERTY()
+	//Var to edit the parameters of recast, STILL NOT USED
+	//UPROPERTY()
 	class ARecastNavMesh* RecastNavmesh;
 
-	UPROPERTY()
+	//Var to host the current NavigationSystem
+	//UPROPERTY()
 	class UNavigationSystemV1* NavigationSystemV1 = nullptr;
 
-	UPROPERTY()
+	//Array of NavMeshBoundsVolume
+	//UPROPERTY()
 	TArray<class ANavMeshBoundsVolume*> ArrayOfNavMeshBoundsVolume;
 
-	UPROPERTY()
+	//Current floor counter
+	//UPROPERTY()
 	int CurrentFloor;
 
-	UPROPERTY()
+	//Array of initial navmesh shape parameters, so we can calculate the difference for the bounds, based on this values
+	//UPROPERTY()
 	TArray<FVector> InitialNavMeshBound;
 
-	UPROPERTY()
+	//Reference to NavMeshSceneBounds
+	//UPROPERTY()
 	NavMeshSceneBounds SceneBounds;
 
-	UPROPERTY()
+	//Reference to OptimizeNavMeshScene
+	//UPROPERTY()
 	OptimizeNavMeshScene Optimizer;
-		
-	UPROPERTY()
+	
+	//FOR TESTING: switch on-off from VRCharacter
+	//UPROPERTY()
 	bool bOptimize;
 
 private:
+
+	//UFUNCTION()
 	void SetupNavMeshSettings();
+
+	//UFUNCTION()
 	void SpawnNavMesh();
 };

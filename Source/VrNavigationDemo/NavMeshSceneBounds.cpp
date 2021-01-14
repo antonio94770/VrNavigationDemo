@@ -9,17 +9,8 @@ NavMeshSceneBounds::NavMeshSceneBounds()
 {
 }
 
-NavMeshSceneBounds::NavMeshSceneBounds(UWorld* NewWorld)
-{
-	this->World = NewWorld;
-
-	if (FloorsArrayOrigin.Num() == 0)
-		FloorsArrayOrigin = GetAllFloorActorsPosition();
-
-	ResetBounds();
-}
-
-NavMeshSceneBounds::NavMeshSceneBounds(UWorld* NewWorld, NavMeshController& object)
+//We get all
+NavMeshSceneBounds::NavMeshSceneBounds(UWorld* NewWorld, const NavMeshController& object)
 {
 	this->World = NewWorld;
 
@@ -32,8 +23,6 @@ NavMeshSceneBounds::NavMeshSceneBounds(UWorld* NewWorld, NavMeshController& obje
 		bSingleMode = true;
 	}
 
-
-
 	ResetBounds();
 }
 
@@ -42,8 +31,8 @@ NavMeshSceneBounds::~NavMeshSceneBounds()
 
 }
 
-
-TArray<float> NavMeshSceneBounds::GetAllFloorActorsPosition()
+//Function to edit in DC: for every floor actor we get their position
+TArray<float> NavMeshSceneBounds::GetAllFloorActorsPosition() const
 {
 	TArray<float > FloorPositions;
 
@@ -68,9 +57,9 @@ TArray<float> NavMeshSceneBounds::GetAllFloorActorsPosition()
 }
 
 
-TArray<AActor* > NavMeshSceneBounds::GetAllSceneActors()
+//Function to edit in DC: we get all the actors of the scene with a particular tag
+TArray<AActor* > NavMeshSceneBounds::GetAllSceneActors() const
 {
-
 	TArray<AActor*> ActorsList;
 	
 	if (World != nullptr)
@@ -87,6 +76,8 @@ TArray<AActor* > NavMeshSceneBounds::GetAllSceneActors()
 	return ActorsList;
 }
 
+
+//Given Min X and Max X, it edit every min and max variables that all give the floor bounds
 void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinHeight, float MaxHeight)
 {
 	if(ActorsArray.Num() == 0)
@@ -117,8 +108,6 @@ void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinHeigh
 			(MaxHeight < MinHeight && Origin.Z > MinHeight - BoundsDifference.Z)
 			))
 		{
-			//UE_LOG(LogTemp, Error, TEXT("Prendo questo actor: %s"), *Actor->GetName());
-
 
 			ActorXMin = Origin.X - BoxExtent.X;
 			ActorXMax = Origin.X + BoxExtent.X;
@@ -178,6 +167,8 @@ void NavMeshSceneBounds::GetFloorBounds(FVector BoundsDifference, float MinHeigh
 	}
 }
 
+
+//Return navmesh center position for the current floor
 FVector NavMeshSceneBounds::GetOptimalNavMeshPosition(int Floor)
 {
 	FVector NewNavMeshPosition = FVector(0.f, 0.f, 0.f);
@@ -185,7 +176,6 @@ FVector NavMeshSceneBounds::GetOptimalNavMeshPosition(int Floor)
 	if(FloorsArrayOrigin.Num() == 0)
 		FloorsArrayOrigin = GetAllFloorActorsPosition();
 
-	//UE_LOG(LogTemp, Error, TEXT("Numero di piani: %i"), FloorsArrayOrigin.Num());
 
 	UE_LOG(LogTemp, Error, TEXT("Piano: %i"), Floor);
 
@@ -196,20 +186,14 @@ FVector NavMeshSceneBounds::GetOptimalNavMeshPosition(int Floor)
 			MinFloorHeight = FloorsArrayOrigin[Floor];
 			MaxFloorHeight = FloorsArrayOrigin[Floor + 1];
 			GetFloorBounds(FVector(0.f, 0.f, 0.f), MinFloorHeight, MaxFloorHeight);
-
-			//UE_LOG(LogTemp, Error, TEXT("Piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor], FloorsArrayOrigin[Floor + 1]);
-
 		}
 		else
 		{
 			MinFloorHeight = FloorsArrayOrigin[Floor];
 			MaxFloorHeight = -1.f;
 			GetFloorBounds(FVector(0.f, 0.f, 0.f), FloorsArrayOrigin[Floor], -1.f);
-			//UE_LOG(LogTemp, Error, TEXT("Ultimo piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor], -1.f);
 		}
 
-		//UE_LOG(LogTemp, Warning, TEXT("MaxX: %f MaxY: %f MaxZ: %f"), MaxX, MaxY, MaxZ);
-		//UE_LOG(LogTemp, Warning, TEXT("MinX: %f MinY: %f MinZ: %f"), MinX, MinY, MinZ);
 		float NewX = (MaxX + MinX) / 2;
 		float NewY = (MaxY + MinY) / 2;
 		float NewZ = (MaxZ + MinZ) / 2;
@@ -221,6 +205,7 @@ FVector NavMeshSceneBounds::GetOptimalNavMeshPosition(int Floor)
 }
 
 
+//Return navmesh bounds from the current floor and the current navmesh position
 FVector NavMeshSceneBounds::GetNavMeshBounds(FVector NavMeshPosition, int Floor)
 {
 	float FinalX;
@@ -228,23 +213,16 @@ FVector NavMeshSceneBounds::GetNavMeshBounds(FVector NavMeshPosition, int Floor)
 	float FinalZ;
 
 
-	//ResetBounds();
-
 	if (Floor >= 0 && Floor < FloorsArrayOrigin.Num())
 	{
 		if (FloorsArrayOrigin.Num() > Floor + 1)
 		{
 			GetFloorBounds(NavMeshPosition, FloorsArrayOrigin[Floor], FloorsArrayOrigin[Floor + 1]);
-			UE_LOG(LogTemp, Error, TEXT("Piano: %i"), Floor);
 		}
 		else
 		{
 			GetFloorBounds(NavMeshPosition, FloorsArrayOrigin[Floor], -1.f);
-			//UE_LOG(LogTemp, Error, TEXT("Ultimo piano: %i - Low: %f Max: %f"), Floor, FloorsArrayOrigin[Floor]);
 		}
-
-		//UE_LOG(LogTemp, Warning, TEXT("MaxX: %f MaxY: %f MaxZ: %f"), MaxX, MaxY, MaxZ);
-		//UE_LOG(LogTemp, Warning, TEXT("MinX: %f MinY: %f MinZ: %f"), MinX, MinY, MinZ);
 
 		if (fabs(MinX) < MaxX)
 			FinalX = MaxX * 2;
@@ -269,21 +247,28 @@ FVector NavMeshSceneBounds::GetNavMeshBounds(FVector NavMeshPosition, int Floor)
 	return NavMeshBounds;
 }
 
-int NavMeshSceneBounds::GetNumberOfFloors()
+//Return number of floors for the current scene
+int NavMeshSceneBounds::GetNumberOfFloors() const
 {
 	return FloorsArrayOrigin.Num();
 }
 
-float NavMeshSceneBounds::GetMinFloorHeight()
+
+//Return the start height of the floor
+float NavMeshSceneBounds::GetMinFloorHeight() const
 {
 	return MinFloorHeight;
 }
 
-float NavMeshSceneBounds::GetMaxFloorHeight()
+
+//Return the end height of the floor
+float NavMeshSceneBounds::GetMaxFloorHeight() const
 {
 	return MaxFloorHeight;
 }
 
+
+//Reset the bounds for the new calculation
 void NavMeshSceneBounds::ResetBounds()
 {
 	MaxX = 0;

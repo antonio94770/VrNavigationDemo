@@ -8,13 +8,6 @@
 #include "VRCharacter.generated.h"
 
 
-/*UENUM()
-enum class ENavMeshTypeController : uint8 {
-	SINGLEMODE,
-	ONEFLOOR,
-	MULTIPLEFLOOR,
-};*/
-
 UCLASS()
 class VRNAVIGATIONDEMO_API AVRCharacter : public ACharacter
 {
@@ -41,42 +34,49 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* Camera;
 
+	//For testing i can use the mouse input to look
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bCanUseMouseInputForCamera = false;
 
+	//Check it if you want to optimize the actor's floor
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	bool bOptimizeNavMesh;
 
+	//Root of our character's components
 	UPROPERTY()
 	class USceneComponent* RootVR;
 
+	//Controllers
 	UPROPERTY(VisibleAnywhere)
 	class UMotionControllerComponent* LeftController;
 	UPROPERTY(VisibleAnywhere)
 	class UMotionControllerComponent* RightController;
 
+	//Teleport Path
 	UPROPERTY(VisibleAnywhere)
 	class USplineComponent* TeleportPath;
 
+	//Mesh component of destination marker
 	UPROPERTY(VisibleAnywhere)
 	class UStaticMeshComponent* DestinationMarker;
 
+	//Trajectory Mesh
 	UPROPERTY(EditDefaultsOnly)
 	class UStaticMesh* TeleportTrajectoryMesh;
 
+	//Trajectory Material
 	UPROPERTY(EditDefaultsOnly)
 	class UMaterialInterface* TeleportTrajectoryMaterial;
 
+	//Pool of UsplineMeshComponent for the teleport
 	UPROPERTY()
 	TArray<class USplineMeshComponent*> TeleportMeshPool;
 
+	//ONLY FOR TESTING
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	ENavMeshTypeController NavMeshType;
 
 private:
-	/*UPROPERTY(EditAnywhere)
-	float MaxTeleportDistance = 100.f;*/
-
 	//Curve element's radius
 	UPROPERTY(EditAnywhere)
 	float TeleportProjectileRadius = 10.f;
@@ -89,34 +89,52 @@ private:
 	UPROPERTY(EditAnywhere)
 	float TeleportSimulationTime = 1.5f;
 
+	//Teleport of the fade
 	UPROPERTY(EditAnywhere)
 	float TeleportFadeTime = 1.f;
 
+	//Extent for the teleport 
 	UPROPERTY(EditAnywhere)
 	FVector TeleportExtent = FVector(10.f, 10.f, 10.f);
 
+	//Used to save a position, otherwise we can teleport on last view position (also outside a map)
 	UPROPERTY()
 	FVector LastUsefullPositionForTeleport;
 
+	//Bool to check if we can teleport
 	UPROPERTY()
 	bool bCanTeleport;
 
+	//Bool to check if already teleported and then we can't still teleport
 	UPROPERTY()
 	bool bAlreadyTeleported;
 
+	/* These 3 are for actor spawning test*/
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AProceduralMeshWithBoxCollider> BP_ProceduralMeshWithBoxCollider;
+	TSubclassOf<class AProceduralMeshActor> BP_ProceduralMeshNavModifier;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AProceduralMeshWithBoxCollider> BP_ProceduralMeshWithBoxColliderWithCollision;
-	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AProceduralMeshDefault> BP_ProceduralMeshDefault;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AProceduralMeshDefault> BP_ProceduralMeshOptimized;
 
+	//ONLY FOR TESTING
 	UPROPERTY()
 	int CurrentFloorForTesting;
 
+	//ONLY FOR TESTING, REMOVE IT!
 	NavMeshController NavController;
+
+	/* These 3 are for actor spawning test*/
+	UPROPERTY()
+	bool bSpawnedMeshNavModifier = false;
+
+	UPROPERTY()
+	bool bSpawnedDefaultMesh = false;
+	
+	UPROPERTY()
+	bool bSpawnedOptimizedMesh = false;
 
 private:
 	void ForwardMovement(float moveSpeed);
@@ -130,9 +148,9 @@ private:
 	void UpdateSpline(const TArray<FVector> &Path);
 	void DrawTeleportPath(const TArray<FVector> &Path);
 	
-	void SpawnProceduralMesh();
-	void SpawnProceduralMeshWithCollision();
+	void SpawnProceduralMeshNavModifier();
 	void SpawnDefaultProceduralMesh();
+	void SpawnOptimizedProceduralMesh();
 	void SpawnNavMesh();
 	void SaveToFileForStudyingPerformance();
 };

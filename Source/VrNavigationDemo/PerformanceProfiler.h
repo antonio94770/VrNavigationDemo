@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include <Recast/Recast.h>
+#include "Navmesh/RecastNavMesh.h"
+
+
 #include "PerformanceProfiler.generated.h"
 
 UCLASS()
@@ -20,27 +24,30 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	void GetNavigationProfilingData(FString Stat, TArray<FString>*, EComplexStatField::Type DataType);
+	void GetNavigationProfilingData(const FString Stat, TArray<float>* const Array, const EComplexStatField::Type DataType);
+	float GetMaxFromArray(const TArray<float>& Array, int StartPos, int EndPos) const;
 
 private:
 
-	TArray<FString> IncAVGArray_RecastBuildCompressedLayers;
-	TArray<FString> IncMAXArray_RecastBuildCompressedLayers;
+	/* Tarrays that stores all the stats values*/
+	TArray<float> IncAVGArray_RecastBuildCompressedLayers;
+	TArray<float> IncMAXArray_RecastBuildCompressedLayers;
+	
+	TArray<float> IncAVGArray_RecastBuildNavigation;
+	TArray<float> IncMAXArray_RecastBuildNavigation;
+	
+	TArray<float> IncAVGArray_Navigation_TickAsyncBuild;
+	TArray<float> IncMAXArray_Navigation_TickAsyncBuild;
+	
+	TArray<float> IncAVGArray_Navigation_TickMarkDirty;
+	TArray<float> IncMAXArray_Navigation_TickMarkDirty;
+	
+	TArray<float> IncAVGArray_DebugNavOctree;
+	TArray<float> IncMAXArray_DebugNavOctree;
+	
+	TArray<float> IncAVGArray_AddingActorsToNavOctree;
+	TArray<float> IncMAXArray_AddingActorsToNavOctree;
 
-	TArray<FString> IncAVGArray_RecastBuildLayers;
-	TArray<FString> IncMAXArray_RecastBuildLayers;
-
-	TArray<FString> IncAVGArray_Navigation_BuildTime;
-	TArray<FString> IncMAXArray_Navigation_BuildTime;
-
-	TArray<FString> IncAVGArray_Navigation_GenerateNavigationDataLayer;
-	TArray<FString> IncMAXArray_Navigation_GenerateNavigationDataLayer;
-
-	/*TArray<FString> IncAVGArray_Navigation_RecastMemory;
-	TArray<FString> IncMAXArray_Navigation_RecastMemory;*/
-
-	TArray<FString> IncAVGArray_RecastBuildRegions;
-	TArray<FString> IncMAXArray_RecastBuildRegions;
 
 public:	
 	// Called every frame
@@ -48,13 +55,15 @@ public:
 
 	void GetAllProfilingData();
 	void ResetTick();
-	bool SaveArrayToFile(FString Filename, bool AllowOverWriting = true);
-	void DebugNavigationData(FString Filename);
+	bool SaveArrayToFile(FString Filename, bool AllowOverWriting = true) const;
+	void DebugNavigationData(FString Filename) const;
 
 public:
-	int32 MaxNumberOfTicks = 100;
-	int32 CurrentTick = 100;
 
-	bool bProfiling = false;
+	//Used to count the intervall of our profiling operation
+	int32 MaxNumberOfTicks = 100;
+
+	//Set to 100 so we reset to zero when we want to start profiling
+	int32 CurrentTick = 100;
 
 };

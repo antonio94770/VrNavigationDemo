@@ -24,65 +24,73 @@ class VRNAVIGATIONDEMO_API NavMeshSceneBounds
 
 public:
 	NavMeshSceneBounds();
-	NavMeshSceneBounds(UWorld* World);
-	NavMeshSceneBounds(UWorld* NewWorld, class NavMeshController& );
+	NavMeshSceneBounds(UWorld* NewWorld, const class NavMeshController& );
 	~NavMeshSceneBounds();
 
 private:
-	UFUNCTION()
-	TArray<float > GetAllFloorActorsPosition();
+	//UFUNCTION()
+	TArray<float > GetAllFloorActorsPosition() const;
 
-	UFUNCTION()
-	TArray<AActor* > GetAllSceneActors();
+	//UFUNCTION()
+	TArray<AActor* > GetAllSceneActors() const;
 
-	UFUNCTION()
+	//UFUNCTION()
 	void GetFloorBounds(FVector Difference, float MinFloorHeight, float MaxFloorHeight);
 
 public:	
-	UFUNCTION()
+	//UFUNCTION()
 	FVector GetOptimalNavMeshPosition(int Floor);
 
-	UFUNCTION()
+	//UFUNCTION()
 	FVector	GetNavMeshBounds(FVector NavMeshPosition, int Floor);
 	
-	UFUNCTION()
-	int GetNumberOfFloors();
+	//UFUNCTION()
+	int GetNumberOfFloors() const;
 
-	UFUNCTION()
-	float GetMinFloorHeight();
+	//UFUNCTION()
+	float GetMinFloorHeight() const;
 
-	UFUNCTION()
-	float GetMaxFloorHeight();
+	//UFUNCTION()
+	float GetMaxFloorHeight() const;
 
-	UFUNCTION()
+	//UFUNCTION()
 	void ResetBounds();
 
 private:
 
-	UPROPERTY()
+	//Pointer for GetWorld()
+	//UPROPERTY()
 	UWorld* World;
 
-	UPROPERTY()
+	//FVector for the bounds for the navmesh
+	//UPROPERTY()
 	FVector NavMeshBounds;
 
-	UPROPERTY()
+	//List of actors in the scene that have a particular flag
+	//UPROPERTY()
 	TArray<AActor*> ActorsArray;
 
-	UPROPERTY()
+	//Actor's origin for every floors in the scene
+	//UPROPERTY()
 	TArray<float > FloorsArrayOrigin;
 
-	UPROPERTY()
+	//Max X,Y,Z, var to calculate the bounds
+	//UPROPERTY()
 	float MaxX,MaxY,MaxZ;
 
-	UPROPERTY()
+	//Min X,Y,Z, var to calculate the bounds
+	//UPROPERTY()
 	float MinY,MinX,MinZ;
 
-	UPROPERTY()
+	//Bool to remove, used for Single Floor mode
+	//UPROPERTY()
 	bool bSingleMode = false;
 
-	UPROPERTY()
+	//Min X for the current Floor
+	//UPROPERTY()
 	float MinFloorHeight; 
-		
-	UPROPERTY()
+	
+	//Max X for the current Floor
+	//UPROPERTY()
 	float MaxFloorHeight;
 };
